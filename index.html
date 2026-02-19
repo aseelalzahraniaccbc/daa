@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Role Selection - Portal</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 50px 40px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 900px;
+            width: 100%;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 2.5em;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 50px;
+            font-size: 1.1em;
+        }
+
+        .roles-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 25px;
+            margin-top: 30px;
+        }
+
+        .role-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 15px;
+            padding: 40px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            text-decoration: none;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .role-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 15px 40px rgba(102, 126, 234, 0.4);
+        }
+
+        .role-card:focus {
+            outline: 3px solid #333;
+            outline-offset: 3px;
+        }
+
+        .role-icon {
+            font-size: 3em;
+            margin-bottom: 10px;
+        }
+
+        .role-title {
+            font-size: 1.4em;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .role-description {
+            font-size: 0.9em;
+            opacity: 0.9;
+        }
+
+        .role-card:nth-child(1) {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+
+        .role-card:nth-child(2) {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        }
+
+        .role-card:nth-child(3) {
+            background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+        }
+
+        .role-card:nth-child(4) {
+            background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 30px 20px;
+            }
+
+            h1 {
+                font-size: 2em;
+            }
+
+            .roles-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <main class="container">
+        <h1>Welcome to Portal</h1>
+        <p class="subtitle">Please select your designation to continue</p>
+        
+        <nav class="roles-grid" aria-label="Role selection">
+            <a href="management.html" class="role-card" aria-label="Management - Executive Dashboard">
+                <div class="role-icon" aria-hidden="true">👔</div>
+                <div class="role-title">Management</div>
+                <div class="role-description">Executive Dashboard</div>
+            </a>
+
+            <a href="bsm.html" class="role-card" aria-label="BSM - Business Sales Manager">
+                <div class="role-icon" aria-hidden="true">📊</div>
+                <div class="role-title">BSM</div>
+                <div class="role-description">Business Sales Manager</div>
+            </a>
+
+            <a href="supervisor.html" class="role-card" aria-label="Supervisor - Team Oversight">
+                <div class="role-icon" aria-hidden="true">👨‍💼</div>
+                <div class="role-title">Supervisor</div>
+                <div class="role-description">Team Oversight</div>
+            </a>
+
+            <a href="salesman.html" class="role-card" aria-label="Salesman - Sales Operations">
+                <div class="role-icon" aria-hidden="true">💼</div>
+                <div class="role-title">Salesman</div>
+                <div class="role-description">Sales Operations</div>
+            </a>
+        </nav>
+    </main>
+</body>
+</html>

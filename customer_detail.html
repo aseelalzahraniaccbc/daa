@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Customer Detail - Portal</title>
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box}
+        body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#f0f4f0;min-height:100vh;padding:20px}
+        .page-container{max-width:1100px;margin:0 auto}
+
+        /* Header */
+        .page-header{background:linear-gradient(135deg,#43e97b,#38f9d7);color:#fff;border-radius:15px;padding:25px 30px;margin-bottom:20px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:15px}
+        .page-header h1{font-size:1.6em;display:flex;align-items:center;gap:10px}
+        .page-header .sub{opacity:.9;font-size:.9em;margin-top:4px}
+        .back-btn{background:rgba(255,255,255,.2);color:#fff;border:2px solid rgba(255,255,255,.4);padding:10px 20px;border-radius:10px;font-size:.95em;font-weight:600;cursor:pointer;transition:all .2s;text-decoration:none;display:inline-flex;align-items:center;gap:6px}
+        .back-btn:hover{background:rgba(255,255,255,.35)}
+
+        /* Customer Summary Card */
+        .cust-summary{background:#fff;border-radius:15px;padding:25px 30px;margin-bottom:20px;box-shadow:0 2px 15px rgba(0,0,0,.05);display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:20px}
+        .sum-item{text-align:center}
+        .sum-item .val{font-size:1.6em;font-weight:700;color:#2e7d32}
+        .sum-item .lbl{font-size:.85em;color:#888;margin-top:4px}
+        .var-positive{color:#2e7d32}.var-negative{color:#c62828}
+
+        /* Section Cards */
+        .section-card{background:#fff;border-radius:15px;padding:25px 30px;margin-bottom:20px;box-shadow:0 2px 15px rgba(0,0,0,.05)}
+        .section-card h3{font-size:1.2em;color:#333;margin-bottom:15px;display:flex;align-items:center;gap:8px}
+
+        /* Data Table */
+        .data-table{width:100%;border-collapse:collapse}
+        .data-table th{background:linear-gradient(135deg,#e8f5e9,#c8e6c9);padding:12px;text-align:left;color:#333;font-weight:600;font-size:.85em;position:sticky;top:0}
+        .data-table td{padding:10px 12px;border-bottom:1px solid #f0f0f0;color:#555;font-size:.9em}
+        .data-table tbody tr:hover{background:#f9fdf9}
+        .sales-val{font-weight:600;color:#333}
+        .total-row{background:#e8f5e9;font-weight:700}
+        .total-row td{border-bottom:none;color:#2e7d32}
+
+        /* Survey Trigger */
+        .survey-trigger-card{background:#fff;border-radius:16px;padding:20px;cursor:pointer;transition:transform .2s,box-shadow .2s;box-shadow:0 2px 15px rgba(0,0,0,.05);margin-bottom:20px}
+        .survey-trigger-card:hover{transform:translateY(-3px);box-shadow:0 8px 30px rgba(67,233,123,.2)}
+        .survey-trigger-inner{display:flex;align-items:center;gap:20px}
+        .survey-trigger-icon{font-size:2.5em;width:65px;height:65px;background:linear-gradient(135deg,#43e97b,#38f9d7);border-radius:16px;display:flex;align-items:center;justify-content:center}
+        .survey-trigger-text h3{color:#333;font-size:1.2em;margin-bottom:3px}
+        .survey-trigger-text p{color:#666;font-size:.9em}
+        .survey-badge{background:linear-gradient(135deg,#43e97b,#38f9d7);color:#fff;font-size:.8em;font-weight:700;padding:4px 12px;border-radius:20px;margin-left:auto}
+
+        /* Modal */
+        .modal-overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.5);z-index:1000;justify-content:center;align-items:center;padding:20px}
+        .modal-overlay.active{display:flex}
+        .modal-box{background:#fff;border-radius:20px;max-width:600px;width:100%;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.3);animation:modalIn .3s ease}
+        @keyframes modalIn{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+        .modal-header{padding:25px 25px 0;display:flex;justify-content:space-between;align-items:center}
+        .modal-header h3{font-size:1.4em;color:#333}
+        .modal-close{width:36px;height:36px;border-radius:50%;border:none;background:#f5f5f5;font-size:1.2em;cursor:pointer;display:flex;align-items:center;justify-content:center}
+        .modal-close:hover{background:#e0e0e0}
+        .modal-body{padding:25px}
+
+        /* Survey Form */
+        .survey-form{display:none}.survey-form.active{display:block}
+        .survey-field{margin-bottom:25px}
+        .survey-field-label{color:#333;font-weight:600;margin-bottom:10px;display:block;font-size:1em}
+        .survey-field-sublabel{color:#888;font-size:.85em;margin-bottom:8px;display:block}
+        .survey-readonly{background:#f8f9fa;border:2px solid #e8ecf1;border-radius:12px;padding:14px;color:#333;font-size:1em;font-weight:500}
+        .survey-readonly .field-icon{margin-right:8px;opacity:.7}
+
+        /* Rating */
+        .rating-container{display:flex;gap:8px;flex-wrap:wrap}
+        .rating-btn{width:48px;height:48px;border-radius:12px;border:2px solid #e0e0e0;background:#fff;font-size:1.1em;font-weight:700;color:#666;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center}
+        .rating-btn:hover{border-color:#43e97b;color:#2e7d32;transform:scale(1.08)}
+        .rating-btn.selected{background:linear-gradient(135deg,#43e97b,#38f9d7);color:#fff;border-color:transparent;box-shadow:0 4px 15px rgba(67,233,123,.3);transform:scale(1.1)}
+        .rating-label{margin-top:10px;font-size:.85em;color:#999;display:flex;justify-content:space-between}
+
+        /* Photo */
+        .photo-upload-area{border:2px dashed #ddd;border-radius:14px;padding:25px;text-align:center;cursor:pointer;transition:border-color .3s,background .3s}
+        .photo-upload-area:hover{border-color:#43e97b;background:#f5fdf7}
+        .photo-upload-area.has-photos{border-style:solid;border-color:#e0e0e0;cursor:default}
+        .photo-upload-icon{font-size:2.2em;margin-bottom:8px}
+        .photo-upload-text{color:#666;font-size:.95em}.photo-upload-hint{color:#aaa;font-size:.8em;margin-top:5px}
+        .photo-input{display:none}
+        .photo-preview-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(90px,1fr));gap:10px;margin-top:12px}
+        .photo-preview-item{position:relative;border-radius:10px;overflow:hidden;aspect-ratio:1;background:#f0f0f0}
+        .photo-preview-item img{width:100%;height:100%;object-fit:cover}
+        .photo-remove-btn{position:absolute;top:4px;right:4px;width:22px;height:22px;border-radius:50%;background:rgba(0,0,0,.6);color:#fff;border:none;font-size:.75em;cursor:pointer;display:flex;align-items:center;justify-content:center}
+        .add-more-photos{border:2px dashed #ddd;border-radius:10px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:1.5em;color:#ccc;aspect-ratio:1}
+        .add-more-photos:hover{border-color:#43e97b;color:#2e7d32}
+
+        /* Submit */
+        .survey-submit-btn{width:100%;padding:15px;background:linear-gradient(135deg,#43e97b,#38f9d7);color:#fff;border:none;border-radius:12px;font-size:1.1em;font-weight:700;cursor:pointer;transition:transform .2s,box-shadow .2s;margin-top:10px}
+        .survey-submit-btn:hover{transform:translateY(-2px);box-shadow:0 8px 25px rgba(67,233,123,.3)}
+        .survey-submit-btn:disabled{opacity:.5;cursor:not-allowed;transform:none;box-shadow:none}
+
+        /* Success */
+        .survey-success{display:none;text-align:center;padding:40px 20px}
+        .survey-success.active{display:block}
+        .success-icon{font-size:3.5em;margin-bottom:15px}
+        .success-title{font-size:1.4em;font-weight:700;color:#333;margin-bottom:10px}
+        .success-text{color:#666;margin-bottom:20px}
+        .success-btn{padding:12px 35px;background:linear-gradient(135deg,#43e97b,#38f9d7);color:#fff;border:none;border-radius:12px;font-size:1em;font-weight:600;cursor:pointer}
+
+        /* Survey History */
+        .survey-history-table{width:100%;border-collapse:collapse;margin-top:15px}
+        .survey-history-table thead{background:linear-gradient(135deg,#e8f5e9,#c8e6c9)}
+        .survey-history-table th{padding:10px;text-align:left;color:#333;font-weight:600;font-size:.82em}
+        .survey-history-table td{padding:10px;border-bottom:1px solid #f0f0f0;color:#555;font-size:.88em}
+        .survey-history-table tbody tr:hover{background:#f5faf5}
+        .rating-stars{color:#2e7d32;font-weight:700}
+        .photo-count-badge{background:#e8f5e9;color:#2e7d32;padding:3px 10px;border-radius:10px;font-size:.8em;font-weight:600}
+        .photo-link{color:#2e7d32;text-decoration:none;font-weight:600;font-size:.85em}
+        .photo-link:hover{text-decoration:underline}
+
+        .no-data{text-align:center;color:#aaa;padding:40px;font-style:italic}
+
+        /* Toolbar */
+        .toolbar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:15px}
+        .toolbar input[type="text"]{padding:8px 14px;border:1px solid #ddd;border-radius:8px;font-size:.9em;min-width:200px}
+        .toolbar select{padding:8px 10px;border:1px solid #ddd;border-radius:8px;font-size:.85em;background:#fff}
+        .toolbar-group{display:flex;align-items:center;gap:5px}
+        .toolbar-group label{font-size:.82em;color:#888;white-space:nowrap}
+
+        @media(max-width:768px){
+            .page-header{flex-direction:column;text-align:center}
+            .cust-summary{grid-template-columns:1fr 1fr}
+            .toolbar{flex-direction:column;align-items:stretch}
+            .toolbar input{min-width:auto;width:100%}
+            .rating-btn{width:40px;height:40px;font-size:.95em}
+        }
+        th.sortable{cursor:pointer;user-select:none;position:relative;padding-right:20px !important;}
+        th.sortable::after{content:'⇅';position:absolute;right:4px;top:50%;transform:translateY(-50%);opacity:0.3;font-size:0.75em;}
+        th.sortable.sort-asc::after{content:'▲';opacity:0.8;color:#2e7d32;}
+        th.sortable.sort-desc::after{content:'▼';opacity:0.8;color:#2e7d32;}
+        th.sortable:hover{background:rgba(0,0,0,0.04);}
+    </style>
+</head>
+<body>
+<div class="page-container">
+
+    <!-- Header -->
+    <div class="page-header">
+        <div>
+            <h1>🏪 <span id="custNameHeader">Customer</span></h1>
+            <div class="sub">Code: <strong id="custCodeHeader">—</strong> | Salesman: <strong id="custSalesmanHeader">—</strong> | Route: <strong id="custRouteHeader">—</strong></div>
+            <div class="sub">Supervisor: <strong id="spvNameHeader">—</strong></div>
+        </div>
+        <a class="back-btn" href="#" onclick="goBack(); return false;">← Back to Dashboard</a>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="cust-summary">
+        <div class="sum-item"><div class="val" id="sumProducts">0</div><div class="lbl">Products</div></div>
+        <div class="sum-item"><div class="val" id="sumBrands">0</div><div class="lbl">Brands</div></div>
+        <div class="sum-item"><div class="val" id="sumTotalCY">0</div><div class="lbl">Total ACT-CY</div></div>
+        <div class="sum-item"><div class="val" id="sumTotalLY">0</div><div class="lbl">Total ACT-LY</div></div>
+        <div class="sum-item"><div class="val" id="sumVar">0%</div><div class="lbl">Variance</div></div>
+        <div class="sum-item"><div class="val" id="sumSurveys">0</div><div class="lbl">Surveys</div></div>
+    </div>
+
+    <!-- Survey Trigger -->
+    <div class="survey-trigger-card" onclick="openSurveyModal()">
+        <div class="survey-trigger-inner">
+            <div class="survey-trigger-icon">📋</div>
+            <div class="survey-trigger-text">
+                <h3>Create Survey</h3>
+                <p>Rate the execution for this customer</p>
+            </div>
+            <div class="survey-badge" id="surveyCountBadge">0 Surveys</div>
+        </div>
+    </div>
+
+    <!-- Detail Table -->
+    <div class="section-card">
+        <h3>📦 Product Sales Detail</h3>
+        <div class="toolbar">
+            <input type="text" id="detailSearch" placeholder="🔍 Search products...">
+            <div class="toolbar-group"><label>Brand:</label><select id="filtBrand"><option value="">All</option></select></div>
+            <div class="toolbar-group"><label>Date:</label><select id="filtDate"><option value="">All</option></select></div>
+        </div>
+        <table class="data-table">
+            <thead><tr><th class="sortable" data-sort="brand">Brand</th><th class="sortable" data-sort="productGroup">Product Group</th><th class="sortable" data-sort="subBrand">Sub Brand</th><th class="sortable" data-sort="product">Product</th><th class="sortable" data-sort="date">Date</th><th class="sortable" data-sort="actCY">ACT-CY</th><th class="sortable" data-sort="actLY">ACT-LY</th><th class="sortable" data-sort="varPct">Var %</th></tr></thead>
+            <tbody id="detailTableBody"><tr><td colspan="8" class="no-data">Loading…</td></tr></tbody>
+            <tfoot><tr class="total-row"><td colspan="5">Total</td><td id="detailTotalCY">0</td><td id="detailTotalLY">0</td><td></td></tr></tfoot>
+        </table>
+    </div>
+
+    <!-- Survey History -->
+    <div class="section-card">
+        <h3>📁 Survey History for this Customer</h3>
+        <div id="surveyHistoryContent"><p class="no-data">No surveys yet</p></div>
+    </div>
+</div>
+
+<!-- SURVEY MODAL -->
+<div class="modal-overlay" id="surveyModal">
+    <div class="modal-box">
+        <div class="modal-header">
+            <h3>📋 Customer Survey</h3>
+            <button class="modal-close" onclick="closeSurveyModal()">✕</button>
+        </div>
+        <div class="modal-body">
+            <!-- Survey Form (no step 1 — customer is pre-selected) -->
+            <div id="surveyStep2" class="survey-form active">
+                <div class="survey-field">
+                    <label class="survey-field-label">1. Customer Name</label>
+                    <div class="survey-readonly"><span class="field-icon">🏪</span><span id="surveyDispName">—</span></div>
+                </div>
+                <div class="survey-field">
+                    <label class="survey-field-label">2. Customer Code</label>
+                    <div class="survey-readonly"><span class="field-icon">🔖</span><span id="surveyDispCode">—</span></div>
+                </div>
+                <div class="survey-field">
+                    <label class="survey-field-label">3. What do you rate the execution out of 10?</label>
+                    <div class="rating-container" id="ratingContainer"></div>
+                    <div class="rating-label"><span>Poor</span><span>Excellent</span></div>
+                </div>
+                <div class="survey-field">
+                    <label class="survey-field-label">4. Attach photos for the execution</label>
+                    <label class="survey-field-sublabel">Upload images showing the execution at the customer location</label>
+                    <div class="photo-upload-area" id="photoUploadArea" onclick="triggerPhotoInput()">
+                        <div id="photoPlaceholder">
+                            <div class="photo-upload-icon">📷</div>
+                            <div class="photo-upload-text">Click to upload photos</div>
+                            <div class="photo-upload-hint">JPG, PNG — up to 10 photos</div>
+                        </div>
+                        <div class="photo-preview-grid" id="photoPreviewGrid"></div>
+                    </div>
+                    <input type="file" class="photo-input" id="photoInput" accept="image/*" multiple>
+                </div>
+                <button class="survey-submit-btn" id="surveySubmitBtn" onclick="submitSurvey()" disabled>Submit Survey</button>
+            </div>
+
+            <!-- SUCCESS -->
+            <div id="surveySuccess" class="survey-success">
+                <div class="success-icon">✅</div>
+                <div class="success-title">Survey Submitted!</div>
+                <div class="success-text">Your execution survey has been saved.</div>
+                <div id="successStatusMsg" style="margin-bottom:20px;font-size:.9em"></div>
+                <button class="success-btn" onclick="closeSurveyModal()">Done</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// ══ CONFIG ══
+const POWER_AUTOMATE_URL = 'https://default04af0493a5b44947ab72ae37fae884.14.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/6018be027d0d496e9c5fa667370d2dff/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=ajBhz97SiJp_mX8pPijjTLOPjVEzGZHsvRJQXTyrpLU';
+const POWER_AUTOMATE_GET_URL = 'https://default04af0493a5b44947ab72ae37fae884.14.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/a52eaf1a49894199856439aa7e837f82/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=TKq2xFQ8rgo4juZL9h8SoNrPOH-gEe24DIOd7Jsu0Qw';
+
+let customerData=[], custCode='', custName='', custSalesman='', custSalesmanCode='', custRoute='';
+let spvName='', spvCode='';
+let surveys=[], selectedPhotos=[], selectedRating=0;
+
+function sanitize(s){const d=document.createElement('div');d.textContent=String(s);return d.innerHTML;}
+
+// ══ INIT — read customer info from sessionStorage ══
+window.onload=function(){
+    const info=sessionStorage.getItem('customerDetailInfo');
+    if(!info){document.querySelector('.page-container').innerHTML='<div class="section-card"><p class="no-data">No customer selected. <a href="supervisor.html">Go back</a></p></div>';return;}
+    const data=JSON.parse(info);
+    custCode=data.customerCode;
+    custName=data.customerName;
+    custSalesman=data.salesman;
+    custSalesmanCode=data.salesmanCode;
+    custRoute=data.routeCode;
+    spvName=data.spvName||'';
+    spvCode=data.spvCode||'';
+    customerData=data.rows||[];
+
+    // Fill header
+    document.getElementById('custNameHeader').textContent=custName;
+    document.getElementById('custCodeHeader').textContent=custCode;
+    document.getElementById('custSalesmanHeader').textContent=custSalesman+' ('+custSalesmanCode+')';
+    document.getElementById('custRouteHeader').textContent=custRoute;
+    document.getElementById('spvNameHeader').textContent=spvName+' ('+spvCode+')';
+
+    // Survey pre-fill
+    document.getElementById('surveyDispName').textContent=custName;
+    document.getElementById('surveyDispCode').textContent=custCode;
+
+    // Summary
+    const totalCY=customerData.reduce((a,r)=>a+(+r.actCY||0),0);
+    const totalLY=customerData.reduce((a,r)=>a+(+r.actLY||0),0);
+    const varPct=totalLY?((totalCY-totalLY)/totalLY*100):0;
+    const brands=[...new Set(customerData.map(r=>r.brand))];
+    const products=[...new Set(customerData.map(r=>r.product))];
+
+    document.getElementById('sumProducts').textContent=products.length;
+    document.getElementById('sumBrands').textContent=brands.length;
+    document.getElementById('sumTotalCY').textContent=totalCY.toLocaleString();
+    document.getElementById('sumTotalLY').textContent=totalLY.toLocaleString();
+    const varEl=document.getElementById('sumVar');
+    varEl.textContent=(varPct>=0?'+':'')+varPct.toFixed(1)+'%';
+    varEl.className='val '+(varPct>=0?'var-positive':'var-negative');
+
+    // Populate filters
+    const fillSel=(id,vals,lbl)=>{const s=document.getElementById(id);s.innerHTML='<option value="">All '+lbl+'</option>';vals.forEach(v=>s.innerHTML+='<option value="'+sanitize(v)+'">'+sanitize(v)+'</option>');};
+    fillSel('filtBrand',brands.sort(),'Brands');
+    fillSel('filtDate',[...new Set(customerData.map(r=>r.date))].sort(),'Dates');
+
+    renderDetailTable();
+    buildRatingButtons();
+    loadSurveys();
+};
+
+// ══ DETAIL TABLE ══
+let detSortField='',detSortDir='asc';
+function getFilteredDetail(){
+    let d=[...customerData];
+    const q=document.getElementById('detailSearch').value.toLowerCase();
+    const fB=document.getElementById('filtBrand').value;
+    const fD=document.getElementById('filtDate').value;
+    if(fB)d=d.filter(r=>r.brand===fB);
+    if(fD)d=d.filter(r=>r.date===fD);
+    if(q)d=d.filter(r=>[r.brand,r.product,r.productGroup,r.subBrand,r.date].some(v=>String(v).toLowerCase().includes(q)));
+    // Add varPct for sorting
+    d.forEach(r=>{r.varPct=(+r.actLY)?((+r.actCY-(+r.actLY))/(+r.actLY)*100):0;});
+    if(detSortField){const m=detSortDir==='desc'?-1:1;d.sort((a,b)=>{const va=a[detSortField],vb=b[detSortField];if(typeof va==='number')return(va-vb)*m;return String(va||'').localeCompare(String(vb||''))*m;});}
+    return d;
+}
+
+function renderDetailTable(){
+    const data=getFilteredDetail();
+    const tbody=document.getElementById('detailTableBody');
+    if(!data.length){tbody.innerHTML='<tr><td colspan="8" class="no-data">No data found</td></tr>';document.getElementById('detailTotalCY').textContent='0';document.getElementById('detailTotalLY').textContent='0';return;}
+    let html='',tCY=0,tLY=0;
+    data.forEach(r=>{
+        const cy=+r.actCY||0,ly=+r.actLY||0;
+        tCY+=cy;tLY+=ly;
+        const v=ly?((cy-ly)/ly*100):0;
+        const vcls=v>=0?'var-positive':'var-negative';
+        html+='<tr><td style="font-weight:600;color:#2e7d32">'+sanitize(r.brand)+'</td><td>'+sanitize(r.productGroup)+'</td><td>'+sanitize(r.subBrand)+'</td><td>'+sanitize(r.product)+'</td><td>'+sanitize(r.date)+'</td><td class="sales-val">'+cy.toLocaleString()+'</td><td>'+ly.toLocaleString()+'</td><td><span class="'+vcls+'">'+(v>=0?'+':'')+v.toFixed(1)+'%</span></td></tr>';
+    });
+    tbody.innerHTML=html;
+    document.getElementById('detailTotalCY').textContent=tCY.toLocaleString();
+    document.getElementById('detailTotalLY').textContent=tLY.toLocaleString();
+    // Sort arrows
+    document.querySelectorAll('th.sortable').forEach(th=>{th.classList.remove('sort-asc','sort-desc');if(th.dataset.sort===detSortField)th.classList.add('sort-'+detSortDir);});
+}
+
+// ══ SURVEY ══
+function openSurveyModal(){
+    document.getElementById('surveyModal').classList.add('active');
+    document.getElementById('surveyStep2').classList.add('active');
+    document.getElementById('surveySuccess').classList.remove('active');
+    resetSurveyForm();
+}
+function closeSurveyModal(){document.getElementById('surveyModal').classList.remove('active');}
+document.addEventListener('click',function(e){if(e.target.id==='surveyModal')closeSurveyModal();});
+
+function buildRatingButtons(){
+    const c=document.getElementById('ratingContainer');c.innerHTML='';
+    for(let i=1;i<=10;i++){
+        const b=document.createElement('button');b.className='rating-btn';b.textContent=i;b.type='button';
+        b.onclick=function(){selectedRating=i;document.querySelectorAll('.rating-btn').forEach(x=>x.classList.remove('selected'));this.classList.add('selected');checkSubmitReady();};
+        c.appendChild(b);
+    }
+}
+
+function resetSurveyForm(){
+    selectedRating=0;selectedPhotos=[];
+    document.getElementById('surveySubmitBtn').disabled=true;
+    document.getElementById('photoPreviewGrid').innerHTML='';
+    document.getElementById('photoUploadArea').classList.remove('has-photos');
+    document.getElementById('photoPlaceholder').style.display='block';
+    document.getElementById('photoInput').value='';
+    document.querySelectorAll('.rating-btn').forEach(b=>b.classList.remove('selected'));
+}
+function triggerPhotoInput(){document.getElementById('photoInput').click();}
+document.addEventListener('DOMContentLoaded',()=>{
+    document.getElementById('photoInput').addEventListener('change',function(e){
+        const files=Array.from(e.target.files);
+        if(selectedPhotos.length+files.length>10){alert('Maximum 10 photos.');return;}
+        files.forEach(f=>{
+            if(!f.type.startsWith('image/'))return;
+            const reader=new FileReader();
+            reader.onload=function(ev){selectedPhotos.push({name:f.name,data:ev.target.result,size:f.size});renderPhotoPreview();checkSubmitReady();};
+            reader.readAsDataURL(f);
+        });
+        this.value='';
+    });
+    ['detailSearch','filtBrand','filtDate'].forEach(id=>{
+        const el=document.getElementById(id);
+        if(el)el.addEventListener(el.tagName==='INPUT'?'input':'change',renderDetailTable);
+    });
+    document.querySelectorAll('th.sortable').forEach(th=>{th.addEventListener('click',function(){const f=this.dataset.sort;if(detSortField===f)detSortDir=detSortDir==='asc'?'desc':'asc';else{detSortField=f;detSortDir='asc';}renderDetailTable();});});
+});
+
+function renderPhotoPreview(){
+    const grid=document.getElementById('photoPreviewGrid'),area=document.getElementById('photoUploadArea'),ph=document.getElementById('photoPlaceholder');
+    grid.innerHTML='';
+    if(selectedPhotos.length>0){
+        ph.style.display='none';area.classList.add('has-photos');
+        selectedPhotos.forEach((p,i)=>{grid.innerHTML+='<div class="photo-preview-item"><img src="'+p.data+'" alt="'+sanitize(p.name)+'"><button class="photo-remove-btn" onclick="event.stopPropagation();removePhoto('+i+')">✕</button></div>';});
+        if(selectedPhotos.length<10)grid.innerHTML+='<div class="add-more-photos" onclick="event.stopPropagation();triggerPhotoInput()">+</div>';
+    }else{ph.style.display='block';area.classList.remove('has-photos');}
+}
+function removePhoto(i){selectedPhotos.splice(i,1);renderPhotoPreview();checkSubmitReady();}
+function checkSubmitReady(){document.getElementById('surveySubmitBtn').disabled=!(selectedRating>0);}
+
+function submitSurvey(){
+    const now=new Date();
+    const dateStr=now.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'});
+    const timeStr=now.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
+    const btn=document.getElementById('surveySubmitBtn');
+    btn.disabled=true;btn.textContent='Submitting...';
+
+    const payload={date:dateStr,time:timeStr,salesman:spvName,salesmanCode:String(spvCode),customerName:custName,customerCode:custCode,rating:selectedRating,photos:selectedPhotos.map(p=>({name:p.name,content:p.data.split(',')[1]||''}))};
+
+    const survey={id:Date.now(),customerName:custName,customerCode:custCode,rating:selectedRating,photoCount:selectedPhotos.length,date:dateStr,time:timeStr,salesman:spvName,salesmanCode:spvCode,status:'pending'};
+
+    if(POWER_AUTOMATE_URL){
+        fetch(POWER_AUTOMATE_URL,{method:'POST',headers:{'Content-Type':'application/json'},mode:'cors',body:JSON.stringify(payload)})
+        .then(r=>{if(r.ok){survey.status='synced';}else{survey.status='local-only';}})
+        .catch(()=>{survey.status='local-only';})
+        .finally(()=>{surveys.push(survey);updateSurveyBadge();renderSurveyHistory();showSurveySuccess(survey.status);});
+    }else{
+        survey.status='local-only';
+        surveys.push(survey);updateSurveyBadge();renderSurveyHistory();showSurveySuccess(survey.status);
+    }
+}
+
+function showSurveySuccess(status){
+    document.getElementById('surveyStep2').classList.remove('active');
+    document.getElementById('surveySuccess').classList.add('active');
+    const msg=document.getElementById('successStatusMsg');
+    if(status==='synced')msg.innerHTML='<span style="color:#155724">Saved to OneDrive</span>';
+    else if(status==='local-only'&&POWER_AUTOMATE_URL)msg.innerHTML='<span style="color:#856404">Saved locally — sync failed</span>';
+    else msg.innerHTML='<span style="color:#666">Saved locally</span>';
+    document.getElementById('surveySubmitBtn').textContent='Submit Survey';
+}
+
+function updateSurveyBadge(){
+    const n=surveys.length;
+    document.getElementById('surveyCountBadge').textContent=n+' Survey'+(n!==1?'s':'');
+    document.getElementById('sumSurveys').textContent=n;
+}
+
+// ══ LOAD SURVEYS ══
+function parseExcelDate(val){if(!val)return'';const s=String(val).trim();if(s.match(/[a-zA-Z]/)||s.match(/^\d{4}-\d{2}-\d{2}/))return s.replace(/ 00:00:00$/,'');const n=Number(s);if(!isNaN(n)&&n>30000&&n<100000){return new Date((n-25569)*86400000).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'});}return s;}
+function parseExcelTime(val){if(!val)return'';const s=String(val).trim();if(s.match(/^\d{1,2}:\d{2}/))return s.replace(/:00$/,'');const n=Number(s);if(!isNaN(n)&&n>=0&&n<1){const t=Math.round(n*24*60);return String(Math.floor(t/60)).padStart(2,'0')+':'+String(t%60).padStart(2,'0');}if(!isNaN(n)&&n>30000){const f=n-Math.floor(n);if(f>0){const t=Math.round(f*24*60);return String(Math.floor(t/60)).padStart(2,'0')+':'+String(t%60).padStart(2,'0');}}return s;}
+
+async function loadSurveys(){
+    if(!POWER_AUTOMATE_GET_URL)return;
+    try{
+        const sep=POWER_AUTOMATE_GET_URL.includes('?')?'&':'?';
+        const r=await fetch(POWER_AUTOMATE_GET_URL+sep+'t='+Date.now(),{mode:'cors'});
+        if(r.ok){
+            const data=await r.json();
+            const rows=Array.isArray(data)?data:(data.value||[]);
+            const g=(row,...keys)=>{for(const k of keys){if(row[k]!==undefined&&row[k]!==null&&String(row[k]).trim())return String(row[k]).trim();}return'';};
+            const filtered=rows.filter(row=>g(row,'CustomerCode','customerCode')===custCode);
+            surveys=filtered.map(row=>({
+                id:Date.now()+Math.random(),
+                customerName:g(row,'CustomerName','customerName'),
+                customerCode:g(row,'CustomerCode','customerCode'),
+                rating:parseInt(g(row,'Rating','rating'))||0,
+                photoCount:['Photo1URL','Photo2URL','Photo3URL','Photo4URL','Photo5URL'].map(k=>row[k]).filter(u=>u&&String(u).trim()).length,
+                date:parseExcelDate(g(row,'Date','date')),time:parseExcelTime(g(row,'Time','time')),
+                salesman:g(row,'Salesman','salesman'),salesmanCode:g(row,'SalesmanCode','salesmanCode'),
+                status:'synced',
+                photoURLs:['Photo1URL','Photo2URL','Photo3URL','Photo4URL','Photo5URL'].map(k=>row[k]).filter(u=>u&&String(u).trim())
+            }));
+        }
+    }catch(e){console.error('Load surveys:',e);}
+    updateSurveyBadge();
+    renderSurveyHistory();
+}
+
+function renderSurveyHistory(){
+    const container=document.getElementById('surveyHistoryContent');
+    if(!surveys.length){container.innerHTML='<p class="no-data">No surveys yet for this customer</p>';return;}
+    let html='<table class="survey-history-table"><thead><tr><th>Date</th><th>Time</th><th>By</th><th>Rating</th><th>Photos</th></tr></thead><tbody>';
+    surveys.forEach(s=>{
+        let photoHtml='';
+        if(s.photoURLs&&s.photoURLs.length){photoHtml=s.photoURLs.map((u,i)=>'<a href="'+sanitize(u)+'" target="_blank" class="photo-link">Photo '+(i+1)+'</a>').join(' ');}
+        else{photoHtml='<span class="photo-count-badge">'+(s.photoCount||0)+' photos</span>';}
+        html+='<tr><td>'+sanitize(s.date)+'</td><td>'+sanitize(s.time)+'</td><td>'+sanitize(s.salesman)+'</td><td><span class="rating-stars">'+s.rating+'/10</span></td><td>'+photoHtml+'</td></tr>';
+    });
+    html+='</tbody></table>';
+    container.innerHTML=html;
+}
+
+function goBack(){
+    // If this tab was opened by supervisor, close it and go back
+    if(window.opener && !window.opener.closed){
+        window.close();
+    } else {
+        // Fallback: redirect to supervisor page with customers tab active
+        window.location.href='supervisor.html#tab-customers';
+    }
+}
+</script>
+</body>
+</html>

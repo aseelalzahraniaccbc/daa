@@ -1,0 +1,856 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Management Login</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            min-height: 100vh;
+        }
+
+        /* Login Screen Styles */
+        #loginScreen {
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .login-container {
+            background: white;
+            border-radius: 20px;
+            padding: 50px 40px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 450px;
+            width: 100%;
+        }
+
+        .login-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .login-icon {
+            font-size: 4em;
+            margin-bottom: 15px;
+        }
+
+        .login-header h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 2em;
+        }
+
+        .login-header p {
+            color: #666;
+            font-size: 1em;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        .form-group label {
+            display: block;
+            color: #333;
+            font-weight: 600;
+            margin-bottom: 8px;
+            font-size: 0.95em;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 1em;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #f093fb;
+        }
+
+        .login-btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            margin-top: 10px;
+        }
+
+        .login-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(240, 147, 251, 0.4);
+        }
+
+        .error-message {
+            background: #fee;
+            color: #c33;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            text-align: center;
+            display: none;
+            border: 1px solid #fcc;
+        }
+
+        .back-link {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .back-link a {
+            color: #666;
+            text-decoration: none;
+            font-size: 0.95em;
+            transition: color 0.3s ease;
+        }
+
+        .back-link a:hover {
+            color: #f093fb;
+        }
+
+        /* Dashboard Styles */
+        #dashboard {
+            display: none;
+            background: #f5f7fa;
+            min-height: 100vh;
+        }
+
+        #dashboard.active {
+            display: block;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            padding: 20px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .header-left h1 {
+            font-size: 1.8em;
+            margin-bottom: 5px;
+        }
+
+        .header-left p {
+            font-size: 0.9em;
+            opacity: 0.9;
+        }
+
+        .logout-btn {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: background 0.3s ease;
+        }
+
+        .logout-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 30px auto;
+            padding: 0 20px;
+        }
+
+        .welcome-card {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        }
+
+        .welcome-card h2 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .welcome-card p {
+            color: #666;
+            line-height: 1.6;
+        }
+
+        /* Upload Section */
+        .upload-section {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        }
+
+        .upload-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .upload-header h3 {
+            color: #333;
+            font-size: 1.5em;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .upload-area {
+            border: 2px dashed #e0e0e0;
+            border-radius: 10px;
+            padding: 40px;
+            text-align: center;
+            background: #f9f9f9;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .upload-area:hover {
+            border-color: #f093fb;
+            background: #fff;
+        }
+
+        .upload-area.dragover {
+            border-color: #f093fb;
+            background: #fff7fc;
+        }
+
+        .upload-icon {
+            font-size: 3em;
+            margin-bottom: 15px;
+        }
+
+        .upload-text {
+            color: #666;
+            font-size: 1.1em;
+            margin-bottom: 10px;
+        }
+
+        .upload-hint {
+            color: #999;
+            font-size: 0.9em;
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        .upload-btn {
+            display: inline-block;
+            padding: 12px 30px;
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.3s ease;
+            margin-top: 15px;
+        }
+
+        .upload-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .success-message {
+            background: #d4edda;
+            color: #155724;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+            display: none;
+            border: 1px solid #c3e6cb;
+        }
+
+        .error-upload {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+            display: none;
+            border: 1px solid #f5c6cb;
+        }
+
+        .file-info {
+            background: #e7f3ff;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+            display: none;
+        }
+
+        .file-info h4 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .file-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-top: 10px;
+        }
+
+        .stat-item {
+            background: white;
+            padding: 10px;
+            border-radius: 5px;
+            text-align: center;
+        }
+
+        .stat-label {
+            color: #666;
+            font-size: 0.85em;
+        }
+
+        .stat-value {
+            color: #333;
+            font-size: 1.5em;
+            font-weight: 700;
+        }
+
+        /* Power BI Section Styles */
+        .powerbi-section {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        }
+
+        .powerbi-header {
+            margin-bottom: 20px;
+        }
+
+        .powerbi-header h3 {
+            color: #333;
+            font-size: 1.5em;
+            margin-bottom: 5px;
+        }
+
+        .powerbi-header p {
+            color: #666;
+            font-size: 0.95em;
+        }
+
+        .powerbi-container {
+            background: #f5f7fa;
+            border-radius: 10px;
+            padding: 10px;
+            min-height: 600px;
+        }
+
+        .powerbi-container iframe {
+            border-radius: 8px;
+            display: block;
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+            margin-top: 30px;
+        }
+
+        .dashboard-card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .dashboard-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .card-icon {
+            font-size: 2.5em;
+        }
+
+        .card-title {
+            font-size: 1.3em;
+            color: #333;
+            font-weight: 600;
+        }
+
+        .card-content {
+            color: #666;
+            line-height: 1.6;
+        }
+    </style>
+</head>
+<body>
+    <!-- Login Screen -->
+    <div id="loginScreen">
+        <div class="login-container">
+            <div class="login-header">
+                <div class="login-icon">👔</div>
+                <h1>Management Login</h1>
+                <p>Enter your credentials to continue</p>
+            </div>
+
+            <div id="errorMessage" class="error-message"></div>
+
+            <form id="loginForm">
+                <div class="form-group">
+                    <label for="username">User Name</label>
+                    <input type="text" id="username" name="username" placeholder="Enter your name" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="loginUserID">User ID</label>
+                    <input type="text" id="loginUserID" name="userID" placeholder="Enter your ID (e.g., 12345)" required>
+                </div>
+
+                <button type="submit" class="login-btn">Log In</button>
+            </form>
+
+            <div class="back-link">
+                <a href="index.html">← Back to Role Selection</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Dashboard Screen -->
+    <div id="dashboard">
+        <div class="header">
+            <div class="header-left">
+                <h1>👔 Management Dashboard</h1>
+                <p>Welcome, <span id="displayUserName"></span> (ID: <span id="displayUserID"></span>)</p>
+            </div>
+            <button class="logout-btn" onclick="logout()">Logout</button>
+        </div>
+
+        <div class="container">
+            <div class="welcome-card">
+                <h2>Welcome to Management Portal</h2>
+                <p>Access your executive dashboard, view company-wide analytics, and manage strategic operations from this portal.</p>
+            </div>
+
+            <!-- Upload Customer Data Section -->
+            <div class="upload-section">
+                <div class="upload-header">
+                    <h3>📤 Update Customer Data</h3>
+                </div>
+                
+                <div class="upload-area" id="uploadArea" onclick="document.getElementById('fileInput').click()">
+                    <div class="upload-icon">📊</div>
+                    <div class="upload-text">Click to upload or drag and drop</div>
+                    <div class="upload-hint">Excel file (.xlsx, .xls) with CustomerCode, CustomerName, Sales columns</div>
+                    <button type="button" class="upload-btn" onclick="event.stopPropagation(); document.getElementById('fileInput').click()">
+                        Choose File
+                    </button>
+                </div>
+                
+                <input type="file" id="fileInput" class="file-input" accept=".xlsx,.xls" onchange="handleFileUpload(event)">
+                
+                <div class="file-info" id="fileInfo"></div>
+                <div class="success-message" id="successMessage"></div>
+                <div class="error-upload" id="errorUpload"></div>
+            </div>
+
+            <!-- Power BI Report Section -->
+            <div class="powerbi-section">
+                <div class="powerbi-header">
+                    <h3>📊 Executive Analytics Dashboard</h3>
+                    <p>Real-time business intelligence and performance metrics</p>
+                </div>
+                <div class="powerbi-container">
+                    <iframe 
+                        title="DSR - 26" 
+                        width="100%" 
+                        height="600" 
+                        src="https://app.powerbi.com/reportEmbed?reportId=a0a53869-593b-4596-a31f-484dad909e31&autoAuth=true&ctid=04af0493-a5b4-4947-ab72-ae37fae88414" 
+                        frameborder="0" 
+                        allowFullScreen="true">
+                    </iframe>
+                </div>
+            </div>
+
+            <div class="dashboard-grid">
+                <div class="dashboard-card">
+                    <div class="card-header">
+                        <div class="card-icon">📈</div>
+                        <div class="card-title">Performance Analytics</div>
+                    </div>
+                    <div class="card-content">
+                        View comprehensive performance metrics, sales trends, and team productivity across all departments.
+                    </div>
+                </div>
+
+                <div class="dashboard-card">
+                    <div class="card-header">
+                        <div class="card-icon">💰</div>
+                        <div class="card-title">Financial Overview</div>
+                    </div>
+                    <div class="card-content">
+                        Monitor revenue, expenses, profit margins, and financial forecasts for strategic decision-making.
+                    </div>
+                </div>
+
+                <div class="dashboard-card">
+                    <div class="card-header">
+                        <div class="card-icon">👥</div>
+                        <div class="card-title">Team Management</div>
+                    </div>
+                    <div class="card-content">
+                        Oversee team structure, personnel assignments, and organizational hierarchy across all levels.
+                    </div>
+                </div>
+
+                <div class="dashboard-card">
+                    <div class="card-header">
+                        <div class="card-icon">🎯</div>
+                        <div class="card-title">Strategic Goals</div>
+                    </div>
+                    <div class="card-content">
+                        Set objectives, track progress toward targets, and align company initiatives with long-term vision.
+                    </div>
+                </div>
+
+                <div class="dashboard-card">
+                    <div class="card-header">
+                        <div class="card-icon">📊</div>
+                        <div class="card-title">Reports & Insights</div>
+                    </div>
+                    <div class="card-content">
+                        Generate detailed reports, analyze market trends, and access executive-level business intelligence.
+                    </div>
+                </div>
+
+                <div class="dashboard-card">
+                    <div class="card-header">
+                        <div class="card-icon">⚙️</div>
+                        <div class="card-title">System Settings</div>
+                    </div>
+                    <div class="card-content">
+                        Configure system parameters, manage access controls, and customize organizational workflows.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let usersData = [];
+
+        // Sanitize text to prevent XSS
+        function sanitize(str) {
+            const div = document.createElement('div');
+            div.textContent = str;
+            return div.innerHTML;
+        }
+
+        const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx4KfrY04iIu_GAsfC1hG2TSWieOifr_K8LNfGk5q5Yn2j2AYPhzW4-dI7IBB7SJ5wU/exec';
+
+        // Load users data
+        async function loadData() {
+            if(APPS_SCRIPT_URL){
+                try{
+                    const r=await fetch(APPS_SCRIPT_URL+'?action=getUsers');
+                    if(r.ok){const data=await r.json();if(data.users&&data.users.length){usersData=data.users.map(r=>({userCode:String(r['User Code']||''),userName:r['User Name']||'',role:r['Role']||''}));console.log('Apps Script: loaded',usersData.length,'users');return;}}
+                }catch(e){console.error('Apps Script error:',e);}
+            }
+            try {
+                throw 'skip'; // JSON fallback disabled — using Apps Script
+            } catch (error) {
+                console.error('Error loading data:', error);
+                usersData = [
+                    {"userCode": 12345, "userName": "Admin", "role": "Management"},
+                    {"userCode": 123456, "userName": "SUP", "role": "Supervisor"},
+                    {"userCode": 3001, "userName": "BSM", "role": "BSM"},
+                    {"userCode": 75241, "userName": "Aseel", "role": "Salesman"}
+                ];
+            }
+        }
+
+        // Check if already logged in
+        window.onload = async function() {
+            await loadData();
+            
+            const loggedInUser = sessionStorage.getItem('loggedInUser');
+            if (loggedInUser) {
+                const userData = JSON.parse(loggedInUser);
+                if (userData.role === 'Management') {
+                    showDashboard(userData);
+                } else {
+                    sessionStorage.removeItem('loggedInUser');
+                }
+            }
+
+            // Setup drag and drop
+            setupDragDrop();
+        };
+
+        // Login form submission
+        document.getElementById('loginForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const username = document.getElementById('username').value.trim();
+            const userID = document.getElementById('loginUserID').value.trim();
+            
+            const user = usersData.find(u => 
+                u.userName.toLowerCase() === username.toLowerCase() && 
+                String(u.userCode) === String(userID)
+            );
+            
+            if (user && user.role === 'Management') {
+                sessionStorage.setItem('loggedInUser', JSON.stringify(user));
+                showDashboard(user);
+            } else if (user && user.role !== 'Management') {
+                const errorMsg = document.getElementById('errorMessage');
+                errorMsg.textContent = 'Access Denied: This page is only for Management role.';
+                errorMsg.style.display = 'block';
+                setTimeout(() => errorMsg.style.display = 'none', 3000);
+            } else {
+                const errorMsg = document.getElementById('errorMessage');
+                errorMsg.textContent = 'Invalid credentials. Please check your User Name and User ID.';
+                errorMsg.style.display = 'block';
+                setTimeout(() => errorMsg.style.display = 'none', 3000);
+            }
+        });
+
+        function showDashboard(user) {
+            document.getElementById('loginScreen').style.display = 'none';
+            document.getElementById('dashboard').classList.add('active');
+            document.getElementById('displayUserName').textContent = sanitize(user.userName);
+            document.getElementById('displayUserID').textContent = sanitize(String(user.userCode));
+        }
+
+        function logout() {
+            sessionStorage.removeItem('loggedInUser');
+            document.getElementById('dashboard').classList.remove('active');
+            document.getElementById('loginScreen').style.display = 'flex';
+            document.getElementById('loginForm').reset();
+        }
+
+        // Drag and Drop functionality
+        function setupDragDrop() {
+            const uploadArea = document.getElementById('uploadArea');
+            if (!uploadArea) return;
+
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                uploadArea.addEventListener(eventName, preventDefaults, false);
+            });
+
+            function preventDefaults(e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+
+            ['dragenter', 'dragover'].forEach(eventName => {
+                uploadArea.addEventListener(eventName, () => {
+                    uploadArea.classList.add('dragover');
+                }, false);
+            });
+
+            ['dragleave', 'drop'].forEach(eventName => {
+                uploadArea.addEventListener(eventName, () => {
+                    uploadArea.classList.remove('dragover');
+                }, false);
+            });
+
+            uploadArea.addEventListener('drop', (e) => {
+                const files = e.dataTransfer.files;
+                if (files.length > 0) {
+                    handleFile(files[0]);
+                }
+            }, false);
+        }
+
+        // Handle file upload
+        function handleFileUpload(event) {
+            const file = event.target.files[0];
+            if (file) {
+                handleFile(file);
+            }
+        }
+
+        // Process the Excel file
+        function handleFile(file) {
+            // Clear previous messages
+            document.getElementById('successMessage').style.display = 'none';
+            document.getElementById('errorUpload').style.display = 'none';
+            document.getElementById('fileInfo').style.display = 'none';
+
+            // Check file type
+            if (!file.name.match(/\.(xlsx|xls)$/i)) {
+                showUploadError('Please upload a valid Excel file (.xlsx or .xls)');
+                return;
+            }
+
+            const reader = new FileReader();
+            
+            reader.onload = function(e) {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    
+                    // Get first sheet
+                    const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+                    const jsonData = XLSX.utils.sheet_to_json(firstSheet);
+
+                    // Validate data is not empty
+                    if (jsonData.length === 0) {
+                        showUploadError('The Excel file is empty. Please upload a file with data.');
+                        return;
+                    }
+
+                    // Check for required columns (check all keys in first row)
+                    const firstRow = jsonData[0];
+                    const keys = Object.keys(firstRow);
+                    const hasCustomerCode = keys.some(k => k.toLowerCase() === 'customercode');
+                    const hasCustomerName = keys.some(k => k.toLowerCase() === 'customername');
+                    const hasSales = keys.some(k => k.toLowerCase() === 'sales');
+
+                    if (!hasCustomerCode || !hasCustomerName || !hasSales) {
+                        const missing = [];
+                        if (!hasCustomerCode) missing.push('CustomerCode');
+                        if (!hasCustomerName) missing.push('CustomerName');
+                        if (!hasSales) missing.push('Sales');
+                        showUploadError('Excel file is missing required columns: ' + missing.join(', '));
+                        return;
+                    }
+
+                    // Find actual column names (case-insensitive mapping)
+                    const codeKey = keys.find(k => k.toLowerCase() === 'customercode');
+                    const nameKey = keys.find(k => k.toLowerCase() === 'customername');
+                    const salesKey = keys.find(k => k.toLowerCase() === 'sales');
+
+                    // Convert to proper format with validation
+                    const customersData = jsonData
+                        .filter(row => row[codeKey] && row[nameKey]) // Skip empty rows
+                        .map(row => ({
+                            customerCode: String(row[codeKey]).trim(),
+                            customerName: String(row[nameKey]).trim(),
+                            sales: parseFloat(row[salesKey]) || 0
+                        }));
+
+                    if (customersData.length === 0) {
+                        showUploadError('No valid customer rows found in the file.');
+                        return;
+                    }
+
+                    // Save to localStorage (simulating file update)
+                    localStorage.setItem('customersData', JSON.stringify(customersData));
+
+                    // Show success message with stats
+                    showSuccess(file.name, customersData);
+
+                } catch (error) {
+                    console.error('Error processing file:', error);
+                    showUploadError('Error processing Excel file. Please check the file format.');
+                }
+            };
+
+            reader.onerror = function() {
+                showUploadError('Error reading file. Please try again.');
+            };
+
+            reader.readAsArrayBuffer(file);
+        }
+
+        function showSuccess(fileName, data) {
+            const totalSales = data.reduce((sum, item) => sum + item.sales, 0);
+            
+            const fileInfo = document.getElementById('fileInfo');
+            fileInfo.innerHTML = `
+                <h4>✅ File Uploaded Successfully: ${sanitize(fileName)}</h4>
+                <div class="file-stats">
+                    <div class="stat-item">
+                        <div class="stat-label">Total Customers</div>
+                        <div class="stat-value">${data.length}</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">Total Sales</div>
+                        <div class="stat-value">${totalSales.toLocaleString()} SAR</div>
+                    </div>
+                </div>
+            `;
+            fileInfo.style.display = 'block';
+
+            const successMsg = document.getElementById('successMessage');
+            successMsg.innerHTML = `
+                <strong>✅ Success!</strong> Customer data has been updated and saved to browser storage.
+                <br><br>
+                📊 <strong>${data.length} customers</strong> with total sales of <strong>${totalSales.toLocaleString()} SAR</strong>
+                <br><br>
+                <strong>🔄 Data automatically available to all Salesman dashboards!</strong>
+                <br><br>
+                <button onclick="downloadJSON()" style="margin-top: 10px; padding: 8px 20px; background: #28a745; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: 600;">
+                    📥 Download as customers_data.json
+                </button>
+                <br>
+                <small style="margin-top: 10px; display: block;">Download this file to keep a permanent backup or upload to server.</small>
+            `;
+            successMsg.style.display = 'block';
+
+            // Reset file input
+            document.getElementById('fileInput').value = '';
+        }
+
+        function downloadJSON() {
+            const data = localStorage.getItem('customersData');
+            if (data) {
+                const blob = new Blob([data], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'customers_data.json';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            }
+        }
+
+        function showUploadError(message) {
+            const errorMsg = document.getElementById('errorUpload');
+            errorMsg.innerHTML = `<strong>Error!</strong> ${sanitize(message)}`;
+            errorMsg.style.display = 'block';
+            
+            // Reset file input
+            document.getElementById('fileInput').value = '';
+        }
+    </script>
+</body>
+</html>
