@@ -212,11 +212,11 @@ async function loadFromAppsScript(userCode){
     try{
         const url=APPS_SCRIPT_URL+'?action=login&code='+encodeURIComponent(userCode);
         const r=await fetch(url);if(!r.ok)return false;
-        const data=await r.json();if(data.error)return false;
+        const data=await r.json();console.log('Apps Script response keys:',Object.keys(data));if(data.error){console.error('Apps Script error:',data.error);return false;}
         if(data.user)usersData=[{userCode:String(data.user['User Code']||''),userName:data.user['User Name']||'',role:data.user.Role||''}];
         if(data.salesmenData)salesmenData=data.salesmenData.map(r=>({salesmanCode:String(r['Salesman Code']||''),salesman:r['Salesman']||'',assignedSUP:String(r['Assigned SUP']||''),routeCode:String(r['Route Code']||''),tgt:toNum(r['TGT']),actCY:toNum(r['ACT-CY']),pctTgt:toNum(r['%TGT'])}));
         if(data.masterData)masterData=data.masterData.map(r=>({supervisorCode:String(r['Supervisor Code']||''),salesmanCode:String(r['Salesman Code']||''),branchManager:r['Branch Manager']||'',routeCode:String(r['Route Code']||''),customerCode:String(r['Customer Code']||''),customer:r['Customer']||'',sector:r['Sector']||'',cls:r['Class']||'',region:r['Region']||'',branch:r['Branch']||'',brand:r['Brand']||'',productGroup:r['Product Group']||'',subBrand:r['Sub Brand']||'',product:r['Product']||'',dayDate:String(r['Date']||'').substring(0,10),l3s:toNum(r['L3S']),l6s:toNum(r['L6S']),achCYP:toNum(r['ACH CY (P)']),achLYP:toNum(r['ACH LY (P)']),actCY:toNum(r['ACT-CY']),actLY:toNum(r['ACT-LY'])}));
-        console.log('Apps Script: loaded',salesmenData.length,'salesmen,',masterData.length,'master rows');
+        console.log('Apps Script: loaded',salesmenData.length,'salesmen,',masterData.length,'master rows');if(salesmenData.length)console.log('Sample salesman:',JSON.stringify(salesmenData[0]));if(masterData.length)console.log('Sample master:',JSON.stringify(masterData[0]));
         return true;
     }catch(e){console.error('Apps Script error:',e);return false;}
 }
@@ -472,8 +472,9 @@ function showDashboard(user){
     document.getElementById('dashCode').textContent=sanitize(user.userCode);
 
     // Filter data for this supervisor
-    mySalesmen=salesmenData.filter(s=>s.assignedSUP==user.userCode);
-    myMasterData=masterData.filter(r=>r.assignedSUP==user.userCode);
+    mySalesmen=salesmenData.filter(s=>String(s.assignedSUP)==String(user.userCode));
+    const smCodes=mySalesmen.map(s=>String(s.salesmanCode));
+    myMasterData=masterData.filter(r=>smCodes.includes(String(r.salesmanCode)));
 
     // Summary
     const tTgt=mySalesmen.reduce((a,s)=>a+s.tgt,0);

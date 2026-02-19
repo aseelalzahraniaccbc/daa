@@ -309,13 +309,14 @@ function showDashboard(user){
     document.getElementById('dashName').textContent=sanitize(user.userName);document.getElementById('dashCode').textContent=sanitize(user.userCode);
 
     // Get supervisors assigned to this BSM
-    mySupervisors=supData.filter(s=>s.assignedBSM==user.userCode);
+    mySupervisors=supData.filter(s=>String(s.assignedBSM)==String(user.userCode));
     // Get all supervisor codes under this BSM
     const spvCodes=[...new Set(mySupervisors.map(s=>s.supervisorCode))];
     // Get all salesmen under those supervisors
-    mySalesmen=salesmenData.filter(s=>spvCodes.includes(s.assignedSUP));
-    // Get all master data under those supervisors
-    myMasterData=masterData.filter(r=>spvCodes.includes(r.assignedSUP));
+    mySalesmen=salesmenData.filter(s=>spvCodes.includes(String(s.assignedSUP)));
+    // Get all master data — filter by salesman codes under this BSM
+    const smCodes=mySalesmen.map(s=>String(s.salesmanCode));
+    myMasterData=masterData.filter(r=>smCodes.includes(String(r.salesmanCode)));
 
     // Summary
     const tT=mySalesmen.reduce((a,s)=>a+s.tgt,0),tA=mySalesmen.reduce((a,s)=>a+s.actCY,0);

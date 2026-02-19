@@ -606,7 +606,7 @@ function showDashboard(user,sr){
     document.getElementById('progressPercent').textContent=pct.toFixed(1)+'%';setTimeout(()=>{document.getElementById('progressFill').style.width=Math.min(pct,100)+'%';},100);
     const b=document.getElementById('achievementBadge');
     b.innerHTML=pct>=100?'<span class="achievement-badge badge-success">🎉 Target Achieved!</span>':pct>=90?'<span class="achievement-badge badge-warning">⚡ Almost There!</span>':pct>=75?'<span class="achievement-badge badge-warning">📈 Keep Going!</span>':'<span class="achievement-badge badge-danger">⚠️ Needs Attention</span>';
-    myCustomers=masterData.filter(r=>r.salesmanCode==user.userCode);populateFilters();renderTable();updateSurveyBadge();
+    myCustomers=masterData.filter(r=>String(r.salesmanCode)==String(user.userCode));populateFilters();renderTable();updateSurveyBadge();
     loadSurveys(user.userCode);
 }
 
@@ -638,7 +638,7 @@ document.getElementById('loginForm').addEventListener('submit',async function(e)
     const user=usersData.find(u=>u.userName.toLowerCase()===name.toLowerCase()&&String(u.userCode)===code);
     btn.disabled=false;btn.textContent='Log In';
     if(!user){showError('Invalid credentials. Check your User Name and User ID.');return;}if(user.role!=='Salesman'){showError('Access Denied: This page is for Salesman role only.');return;}
-    const sr=salesmenData.find(s=>s.salesmanCode==user.userCode);if(!sr){showError('No sales data found.');return;}
+    const sr=salesmenData.find(s=>String(s.salesmanCode)==String(user.userCode));if(!sr){showError('No sales data found.');return;}
     sessionStorage.setItem('loggedInSalesman',JSON.stringify(user));currentUser=user;showDashboard(user,sr);});
 
 function showError(m){const e=document.getElementById('errorMessage');e.textContent=m;e.style.display='block';setTimeout(()=>e.style.display='none',3000);}
