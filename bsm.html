@@ -156,17 +156,17 @@
 </div>
 
 <script>
-const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwXDjuyI5j2l8XP1iMkGQ5lXROrNztr77ca0HZCyzWOv6LeGq7eIGU1dvCNWr3q9JtP/exec';
+const AZURE_API_URL = ''  // ← Paste your Azure Function URL here (e.g. https://salesportal-api.azurewebsites.net/api/api);
 
 let usersData=[],salesmenData=[],supData=[],bsmData=[],masterData=[];
 let currentUser=null,mySupervisors=[],mySalesmen=[],myMasterData=[];
 function sanitize(s){const d=document.createElement('div');d.textContent=String(s);return d.innerHTML;}
 function toNum(v){const n=Number(v);return isNaN(n)?0:n;}
 
-async function loadFromAppsScript(userCode){
-    if(!APPS_SCRIPT_URL)return false;
+async function loadFromAzure(userCode){
+    if(!AZURE_API_URL)return false;
     try{
-        const url=APPS_SCRIPT_URL+'?action=login&code='+encodeURIComponent(userCode);
+        const url=AZURE_API_URL+'?action=login&code='+encodeURIComponent(userCode);
         const r=await fetch(url);if(!r.ok)return false;
         const data=await r.json();if(data.error)return false;
         if(data.user)usersData=[{userCode:String(data.user['User Code']||''),userName:data.user['User Name']||'',role:data.user.Role||''}];
@@ -174,9 +174,9 @@ async function loadFromAppsScript(userCode){
         if(data.supData)supData=data.supData.map(r=>({supervisorCode:String(r['Supervisor Code']||''),supervisor:r['Supervisor']||'',routeCode:String(r['Route Code']||''),assignedBSM:String(r['AssignedBSM']||''),tgt:toNum(r['TGT']),actCY:toNum(r['ACT-CY']),pctTgt:toNum(r['%TGT'])}));
         if(data.bsmData)bsmData=data.bsmData.map(r=>({bsmCode:String(r['BSM Code']||''),branchManager:r['Branch Manager']||'',sector:r['Sector']||'',branch:r['Branch']||'',tgt:toNum(r['TGT']),actCY:toNum(r['ACT-CY']),pctTgt:toNum(r['%TGT'])}));
         if(data.masterData)masterData=data.masterData.map(r=>({supervisorCode:String(r['Supervisor Code']||''),salesmanCode:String(r['Salesman Code']||''),branchManager:r['Branch Manager']||'',routeCode:String(r['Route Code']||''),customerCode:String(r['Customer Code']||''),customer:r['Customer']||'',sector:r['Sector']||'',cls:r['Class']||'',region:r['Region']||'',branch:r['Branch']||'',brand:r['Brand']||'',productGroup:r['Product Group']||'',subBrand:r['Sub Brand']||'',product:r['Product']||'',dayDate:String(r['Date']||'').substring(0,10),l3s:toNum(r['L3S']),l6s:toNum(r['L6S']),achCYP:toNum(r['ACH CY (P)']),achLYP:toNum(r['ACH LY (P)']),actCY:toNum(r['ACT-CY']),actLY:toNum(r['ACT-LY'])}));
-        console.log('Apps Script: loaded',supData.length,'SUP,',salesmenData.length,'SM,',masterData.length,'master');
+        console.log('Azure API: loaded',supData.length,'SUP,',salesmenData.length,'SM,',masterData.length,'master');
         return true;
-    }catch(e){console.error('Apps Script error:',e);return false;}
+    }catch(e){console.error('Azure API error:',e);return false;}
 }
 
 async function loadData(){
@@ -338,14 +338,14 @@ document.addEventListener('DOMContentLoaded',()=>{
 });
 
 window.onload=async function(){await loadData();const s=sessionStorage.getItem('loggedInBSM');if(s){const u=JSON.parse(s);
-    if(APPS_SCRIPT_URL){const ok=await loadFromAppsScript(u.userCode);if(!ok){sessionStorage.removeItem('loggedInBSM');return;}}
+    if(AZURE_API_URL){const ok=await loadFromAzure(u.userCode);if(!ok){sessionStorage.removeItem('loggedInBSM');return;}}
     const user=usersData.find(x=>String(x.userCode)==String(u.userCode)&&x.role==='BSM');if(user){currentUser=user;showDashboard(user);}else sessionStorage.removeItem('loggedInBSM');}};
 
 document.getElementById('loginForm').addEventListener('submit',async function(e){e.preventDefault();
     const name=document.getElementById('userName').value.trim(),code=document.getElementById('userCode').value.trim();
     if(!name||!code){showError('Please enter both User Name and User ID.');return;}
     const btn=this.querySelector('button[type="submit"]');btn.disabled=true;btn.textContent='Loading...';
-    if(APPS_SCRIPT_URL){await loadFromAppsScript(code);}
+    if(AZURE_API_URL){await loadFromAzure(code);}
     const user=usersData.find(u=>u.userName.toLowerCase()===name.toLowerCase()&&String(u.userCode)===code);
     btn.disabled=false;btn.textContent='Log In';
     if(!user){showError('Invalid credentials. Check your User Name and User ID.');return;}if(user.role!=='BSM'){showError('Access Denied: This page is for BSM role only.');return;}

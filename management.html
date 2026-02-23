@@ -580,15 +580,15 @@
             return div.innerHTML;
         }
 
-        const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwXDjuyI5j2l8XP1iMkGQ5lXROrNztr77ca0HZCyzWOv6LeGq7eIGU1dvCNWr3q9JtP/exec';
+        const AZURE_API_URL = ''  // ← Paste your Azure Function URL here (e.g. https://salesportal-api.azurewebsites.net/api/api);
 
         // Load users data
         async function loadData() {
-            if(APPS_SCRIPT_URL){
+            if(AZURE_API_URL){
                 try{
-                    const r=await fetch(APPS_SCRIPT_URL+'?action=getUsers');
-                    if(r.ok){const data=await r.json();if(data.users&&data.users.length){usersData=data.users.map(r=>({userCode:String(r['User Code']||''),userName:r['User Name']||'',role:r['Role']||''}));console.log('Apps Script: loaded',usersData.length,'users');return;}}
-                }catch(e){console.error('Apps Script error:',e);}
+                    const r=await fetch(AZURE_API_URL+'?action=getUsers');
+                    if(r.ok){const data=await r.json();if(data.users&&data.users.length){usersData=data.users.map(r=>({userCode:String(r['User Code']||''),userName:r['User Name']||'',role:r['Role']||''}));console.log('Azure API: loaded',usersData.length,'users');return;}}
+                }catch(e){console.error('Azure API error:',e);}
             }
             try {
                 throw 'skip'; // JSON fallback disabled — using Apps Script

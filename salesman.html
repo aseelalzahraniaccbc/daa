@@ -163,7 +163,7 @@
         <div id="errorMessage" class="error-message"></div>
         <form id="loginForm">
             <div class="form-group"><label for="userName">User Name</label><input type="text" id="userName" placeholder="e.g. Aseel" required></div>
-            <div class="form-group"><label for="userCode">User ID</label><input type="text" id="userCode" placeholder="e.g. 75241" required></div>
+            <div class="form-group"><label for="userCode">User ID</label><input type="text" id="userCode" placeholder="Enter your User Code" required></div>
             <button type="submit" class="login-btn">Log In</button>
         </form>
         <div class="back-link"><a href="index.html">← Back to Role Selection</a></div>
@@ -303,7 +303,7 @@ let selectedPhotos=[];
 let selectedRating=0;
 
 // ══ GOOGLE APPS SCRIPT CONFIG (smart filtered API) ══
-const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwXDjuyI5j2l8XP1iMkGQ5lXROrNztr77ca0HZCyzWOv6LeGq7eIGU1dvCNWr3q9JtP/exec';
+const AZURE_API_URL = ''  // ← Paste your Azure Function URL here (e.g. https://salesportal-api.azurewebsites.net/api/api);
 
 // ══ POWER AUTOMATE CONFIG (surveys only) ══
 const POWER_AUTOMATE_URL = 'https://default04af0493a5b44947ab72ae37fae884.14.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/6018be027d0d496e9c5fa667370d2dff/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=ajBhz97SiJp_mX8pPijjTLOPjVEzGZHsvRJQXTyrpLU';
@@ -312,15 +312,15 @@ const POWER_AUTOMATE_GET_URL = 'https://default04af0493a5b44947ab72ae37fae884.14
 // ══ FETCH FROM APPS SCRIPT (returns only this user's data) ══
 function toNum(v){const n=Number(v);return isNaN(n)?0:n;}
 
-async function loadFromAppsScript(userCode){
-    if(!APPS_SCRIPT_URL)return false;
+async function loadFromAzure(userCode){
+    if(!AZURE_API_URL)return false;
     try{
         console.log('Loading from Apps Script for code:',userCode);
-        const url=APPS_SCRIPT_URL+'?action=login&code='+encodeURIComponent(userCode);
+        const url=AZURE_API_URL+'?action=login&code='+encodeURIComponent(userCode);
         const r=await fetch(url);
-        if(!r.ok){console.error('Apps Script error:',r.status);return false;}
+        if(!r.ok){console.error('Azure API error:',r.status);return false;}
         const data=await r.json();
-        if(data.error){console.error('Apps Script:',data.error);return false;}
+        if(data.error){console.error('Azure API:',data.error);return false;}
         console.log('Apps Script returned:',Object.keys(data));
         if(data.user){
             usersData=[{userCode:String(data.user['User Code']||''),userName:data.user['User Name']||'',role:data.user.Role||''}];
@@ -333,7 +333,7 @@ async function loadFromAppsScript(userCode){
             console.log('Loaded',masterData.length,'master rows (filtered for this user only)');
         }
         return true;
-    }catch(e){console.error('Apps Script error:',e);return false;}
+    }catch(e){console.error('Azure API error:',e);return false;}
 }
 
 async function loadSurveys(salesmanCode){
@@ -617,8 +617,8 @@ window.onload=async function(){
     const s=sessionStorage.getItem('loggedInSalesman');
     if(s){
         const u=JSON.parse(s);
-        if(APPS_SCRIPT_URL){
-            const ok=await loadFromAppsScript(u.userCode);
+        if(AZURE_API_URL){
+            const ok=await loadFromAzure(u.userCode);
             if(!ok){sessionStorage.removeItem('loggedInSalesman');return;}
         }
         const user=usersData.find(x=>String(x.userCode)==String(u.userCode)&&x.role==='Salesman');
@@ -631,7 +631,7 @@ document.getElementById('loginForm').addEventListener('submit',async function(e)
     const name=document.getElementById('userName').value.trim(),code=document.getElementById('userCode').value.trim();
     if(!name||!code){showError('Please enter both User Name and User ID.');return;}
     const btn=this.querySelector('button[type="submit"]');btn.disabled=true;btn.textContent='Loading...';
-    if(APPS_SCRIPT_URL){await loadFromAppsScript(code);}
+    if(AZURE_API_URL){await loadFromAzure(code);}
     const user=usersData.find(u=>u.userName.toLowerCase()===name.toLowerCase()&&String(u.userCode)===code);
     btn.disabled=false;btn.textContent='Log In';
     if(!user){showError('Invalid credentials. Check your User Name and User ID.');return;}if(user.role!=='Salesman'){showError('Access Denied: This page is for Salesman role only.');return;}

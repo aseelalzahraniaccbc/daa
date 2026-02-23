@@ -1,0 +1,7 @@
+{
+  "name": "sales-portal-api",
+  "version": "1.0.0",
+  "dependencies": {
+    "mssql": "^10.0.0"
+  }
+}
