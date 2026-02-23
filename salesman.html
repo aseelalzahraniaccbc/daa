@@ -323,7 +323,7 @@ async function loadFromAzure(userCode){
         if(data.error){console.error('Azure API:',data.error);return false;}
         console.log('Apps Script returned:',Object.keys(data));
         if(data.user){
-            usersData=[{userCode:String(data.user['User Code']||''),userName:data.user['User Name']||'',role:data.user.Role||''}];
+            usersData=[{userCode:String(data.user['User Code']||''),userName:data.user['User Name']||'',role:(data.user.Role||data.user.role||'').trim()}];
         }
         if(data.salesmenData&&data.salesmenData.length){
             salesmenData=data.salesmenData.map(r=>({salesmanCode:String(r['Salesman Code']||''),salesman:r['Salesman']||'',assignedSUP:String(r['Assigned SUP']||''),routeCode:String(r['Route Code']||''),tgt:toNum(r['TGT']),actCY:toNum(r['ACT-CY']),pctTgt:toNum(r['%TGT'])}));
@@ -621,7 +621,7 @@ window.onload=async function(){
             const ok=await loadFromAzure(u.userCode);
             if(!ok){sessionStorage.removeItem('loggedInSalesman');return;}
         }
-        const user=usersData.find(x=>String(x.userCode)==String(u.userCode)&&x.role==='Salesman');
+        const user=usersData.find(x=>String(x.userCode)==String(u.userCode)&&x.role.toLowerCase()==='salesman');
         if(user){const sr=salesmenData.find(x=>String(x.salesmanCode)==String(user.userCode));if(sr){currentUser=user;showDashboard(user,sr);}}
         else sessionStorage.removeItem('loggedInSalesman');
     }
@@ -632,9 +632,9 @@ document.getElementById('loginForm').addEventListener('submit',async function(e)
     if(!name||!code){showError('Please enter both User Name and User ID.');return;}
     const btn=this.querySelector('button[type="submit"]');btn.disabled=true;btn.textContent='Loading...';
     if(AZURE_API_URL){await loadFromAzure(code);}
-    const user=usersData.find(u=>u.userName.toLowerCase()===name.toLowerCase()&&String(u.userCode)===code);
+    const user=usersData.find(u=>u.userName.trim().toLowerCase()===name.trim().toLowerCase()&&String(u.userCode)===code);
     btn.disabled=false;btn.textContent='Log In';
-    if(!user){showError('Invalid credentials. Check your User Name and User ID.');return;}if(user.role!=='Salesman'){showError('Access Denied: This page is for Salesman role only.');return;}
+    if(!user){showError('Invalid credentials. Check your User Name and User ID.');return;}if(user.role.toLowerCase()!=='salesman'){showError('Access Denied: This page is for Salesman role only.');return;}
     const sr=salesmenData.find(s=>String(s.salesmanCode)==String(user.userCode));if(!sr){showError('No sales data found.');return;}
     sessionStorage.setItem('loggedInSalesman',JSON.stringify(user));currentUser=user;showDashboard(user,sr);});
 
