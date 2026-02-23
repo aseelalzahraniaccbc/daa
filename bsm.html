@@ -76,7 +76,7 @@
         <div class="login-header"><div class="login-icon">📊</div><h1>BSM Login</h1><p>Enter your credentials to continue</p></div>
         <div id="errorMessage" class="error-message"></div>
         <form id="loginForm">
-            <div class="form-group"><label for="userName">User Name</label><input type="text" id="userName" placeholder="e.g. BSM" required></div>
+            <div class="form-group"><label for="userName">User Name</label><input type="text" id="userName" placeholder="Enter your Username" required></div>
             <div class="form-group"><label for="userCode">User ID</label><input type="text" id="userCode" placeholder="e.g. 3001" required></div>
             <button type="submit" class="login-btn">Log In</button>
         </form>
@@ -143,10 +143,10 @@
                     <div class="toolbar-group"><label>Brand:</label><select id="filtBrand"><option value="">All</option></select></div>
                     <div class="toolbar-group"><label>Customer:</label><select id="filtCust"><option value="">All</option></select></div>
                     <div class="toolbar-group"><label>Date:</label><select id="filtDate"><option value="">All</option></select></div>
-                    <div class="toolbar-group"><label>Group By:</label><select id="custGroupBy"><option value="">None</option><option value="supervisor">Supervisor</option><option value="salesman">Salesman</option><option value="brand">Brand</option><option value="customer">Customer</option><option value="dayDate">Date</option></select></div>
+                    <div class="toolbar-group"><label>Group By:</label><select id="custGroupBy"><option value="">None</option><option value="supervisor">Supervisor</option><option value="salesman">Salesman</option><option value="brand">Brand</option><option value="customer">Customer</option><option value="date">Date</option></select></div>
                 </div>
                 <table class="data-table">
-                    <thead><tr><th class="sortable" data-sort="supervisor" data-table="cust">Supervisor</th><th class="sortable" data-sort="salesman" data-table="cust">Salesman</th><th class="sortable" data-sort="routeCode" data-table="cust">Route</th><th class="sortable" data-sort="customerCode" data-table="cust">Code</th><th class="sortable" data-sort="customer" data-table="cust">Customer</th><th class="sortable" data-sort="brand" data-table="cust">Brand</th><th class="sortable" data-sort="product" data-table="cust">Product</th><th class="sortable" data-sort="dayDate" data-table="cust">Date</th><th class="sortable" data-sort="actualCY" data-table="cust">ACT-CY</th><th class="sortable" data-sort="actualLY" data-table="cust">ACT-LY</th></tr></thead>
+                    <thead><tr><th class="sortable" data-sort="supervisor" data-table="cust">Supervisor</th><th class="sortable" data-sort="salesman" data-table="cust">Salesman</th><th class="sortable" data-sort="routeCode" data-table="cust">Route</th><th class="sortable" data-sort="customerCode" data-table="cust">Code</th><th class="sortable" data-sort="customer" data-table="cust">Customer</th><th class="sortable" data-sort="brand" data-table="cust">Brand</th><th class="sortable" data-sort="product" data-table="cust">Product</th><th class="sortable" data-sort="date" data-table="cust">Date</th><th class="sortable" data-sort="actCY" data-table="cust">ACT-CY</th><th class="sortable" data-sort="actLY" data-table="cust">ACT-LY</th></tr></thead>
                     <tbody id="custTableBody"><tr><td colspan="10" class="no-data">Loading…</td></tr></tbody>
                     <tfoot><tr class="total-row"><td colspan="8">Total</td><td class="sales-val"><span id="custTotCY">0</span></td><td class="sales-val"><span id="custTotLY">0</span></td></tr></tfoot>
                 </table>
@@ -173,7 +173,7 @@ async function loadFromAzure(userCode){
         if(data.salesmenData)salesmenData=data.salesmenData.map(r=>({salesmanCode:String(r['Salesman Code']||''),salesman:r['Salesman']||'',assignedSUP:String(r['Assigned SUP']||''),routeCode:String(r['Route Code']||''),tgt:toNum(r['TGT']),actCY:toNum(r['ACT-CY']),pctTgt:toNum(r['%TGT'])}));
         if(data.supData)supData=data.supData.map(r=>({supervisorCode:String(r['Supervisor Code']||''),supervisor:r['Supervisor']||'',routeCode:String(r['Route Code']||''),assignedBSM:String(r['AssignedBSM']||''),tgt:toNum(r['TGT']),actCY:toNum(r['ACT-CY']),pctTgt:toNum(r['%TGT'])}));
         if(data.bsmData)bsmData=data.bsmData.map(r=>({bsmCode:String(r['BSM Code']||''),branchManager:r['Branch Manager']||'',sector:r['Sector']||'',branch:r['Branch']||'',tgt:toNum(r['TGT']),actCY:toNum(r['ACT-CY']),pctTgt:toNum(r['%TGT'])}));
-        if(data.masterData)masterData=data.masterData.map(r=>({supervisorCode:String(r['Supervisor Code']||''),salesmanCode:String(r['Salesman Code']||''),branchManager:r['Branch Manager']||'',routeCode:String(r['Route Code']||''),customerCode:String(r['Customer Code']||''),customer:r['Customer']||'',sector:r['Sector']||'',cls:r['Class']||'',region:r['Region']||'',branch:r['Branch']||'',brand:r['Brand']||'',productGroup:r['Product Group']||'',subBrand:r['Sub Brand']||'',product:r['Product']||'',dayDate:String(r['Date']||'').substring(0,10),l3s:toNum(r['L3S']),l6s:toNum(r['L6S']),achCYP:toNum(r['ACH CY (P)']),achLYP:toNum(r['ACH LY (P)']),actCY:toNum(r['ACT-CY']),actLY:toNum(r['ACT-LY'])}));
+        if(data.masterData)masterData=data.masterData.map(r=>({supervisorCode:String(r['Supervisor Code']||''),salesmanCode:String(r['Salesman Code']||''),branchManager:r['Branch Manager']||'',routeCode:String(r['Route Code']||''),customerCode:String(r['Customer Code']||''),customer:r['Customer']||'',sector:r['Sector']||'',cls:r['Class']||'',region:r['Region']||'',branch:r['Branch']||'',brand:r['Brand']||'',productGroup:r['Product Group']||'',subBrand:r['Sub Brand']||'',product:r['Product']||'',date:String(r['Date']||'').substring(0,10),l3s:toNum(r['L3S']),l6s:toNum(r['L6S']),achCYP:toNum(r['ACH CY (P)']),achLYP:toNum(r['ACH LY (P)']),actCY:toNum(r['ACT-CY']),actLY:toNum(r['ACT-LY'])}));
         console.log('Azure API: loaded',supData.length,'SUP,',salesmenData.length,'SM,',masterData.length,'master');
         return true;
     }catch(e){console.error('Azure API error:',e);return false;}
@@ -282,7 +282,7 @@ function renderCustTable(){
 function cRow(c,cy,ly){
     const spv=mySupervisors.find(x=>x.supervisorCode==c.assignedSUP);const spvN=spv?spv.supervisor:c.assignedSUP;
     const sm=mySalesmen.find(x=>x.salesmanCode==c.salesmanCode);const smN=sm?sm.salesman:c.salesmanCode;
-    return`<tr><td>${sanitize(spvN)}</td><td style="font-weight:500">${sanitize(smN)}</td><td>${sanitize(c.routeCode)}</td><td>${sanitize(c.customerCode)}</td><td style="font-weight:500;color:#333">${sanitize(c.customer)}</td><td>${sanitize(c.brand)}</td><td>${sanitize(c.product)}</td><td>${sanitize(c.dayDate)}</td><td class="sales-val">${cy.toLocaleString()}</td><td>${ly.toLocaleString()}</td></tr>`;
+    return`<tr><td>${sanitize(spvN)}</td><td style="font-weight:500">${sanitize(smN)}</td><td>${sanitize(c.routeCode)}</td><td>${sanitize(c.customerCode)}</td><td style="font-weight:500;color:#333">${sanitize(c.customer)}</td><td>${sanitize(c.brand)}</td><td>${sanitize(c.product)}</td><td>${sanitize(c.date)}</td><td class="sales-val">${cy.toLocaleString()}</td><td>${ly.toLocaleString()}</td></tr>`;
 }
 
 function populateFilters(){
@@ -304,11 +304,16 @@ function showDashboard(user){
     mySupervisors=supData.filter(s=>String(s.assignedBSM)==String(user.userCode));
     // Get all supervisor codes under this BSM
     const spvCodes=[...new Set(mySupervisors.map(s=>s.supervisorCode))];
-    // Get all salesmen under those supervisors
-    mySalesmen=salesmenData.filter(s=>spvCodes.includes(String(s.assignedSUP)));
-    // Get all master data — filter by salesman codes under this BSM
+    // Get salesmen under supervisors + salesmen directly assigned to BSM
+    const smFromSup=salesmenData.filter(s=>spvCodes.includes(String(s.assignedSUP)));
+    const smDirect=salesmenData.filter(s=>String(s.assignedSUP)==String(user.userCode));
+    // Deduplicate
+    const smMap={};
+    [...smFromSup,...smDirect].forEach(s=>{smMap[String(s.salesmanCode)]=s;});
+    mySalesmen=Object.values(smMap);
+    // Get all master data
     const smCodes=mySalesmen.map(s=>String(s.salesmanCode));
-    myMasterData=masterData.filter(r=>smCodes.includes(String(r.salesmanCode)));
+    myMasterData=masterData.filter(r=>smCodes.includes(String(r.salesmanCode))||String(r.supervisorCode)==String(user.userCode));
 
     // Summary
     const tT=mySalesmen.reduce((a,s)=>a+s.tgt,0),tA=mySalesmen.reduce((a,s)=>a+s.actCY,0);

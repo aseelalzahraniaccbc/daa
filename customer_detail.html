@@ -176,9 +176,9 @@
             <div class="toolbar-group"><label>Date:</label><select id="filtDate"><option value="">All</option></select></div>
         </div>
         <table class="data-table">
-            <thead><tr><th class="sortable" data-sort="brand">Brand</th><th class="sortable" data-sort="productGroup">Product Group</th><th class="sortable" data-sort="subBrand">Sub Brand</th><th class="sortable" data-sort="product">Product</th><th class="sortable" data-sort="date">Date</th><th class="sortable" data-sort="actCY">ACT-CY</th><th class="sortable" data-sort="actLY">ACT-LY</th><th class="sortable" data-sort="varPct">Var %</th></tr></thead>
-            <tbody id="detailTableBody"><tr><td colspan="8" class="no-data">Loading…</td></tr></tbody>
-            <tfoot><tr class="total-row"><td colspan="5">Total</td><td id="detailTotalCY">0</td><td id="detailTotalLY">0</td><td></td></tr></tfoot>
+            <thead><tr><th class="sortable" data-sort="brand">Brand</th><th class="sortable" data-sort="productGroup">Product Group</th><th class="sortable" data-sort="subBrand">Sub Brand</th><th class="sortable" data-sort="product">Product</th><th class="sortable" data-sort="date">Date</th><th class="sortable" data-sort="l3s">L3S</th><th class="sortable" data-sort="l6s">L6S</th><th class="sortable" data-sort="achCYP">ACH CY</th><th class="sortable" data-sort="achLYP">ACH LY</th><th class="sortable" data-sort="actCY">ACT-CY</th><th class="sortable" data-sort="actLY">ACT-LY</th><th class="sortable" data-sort="varPct">%YoY Growth</th></tr></thead>
+            <tbody id="detailTableBody"><tr><td colspan="12" class="no-data">Loading…</td></tr></tbody>
+            <tfoot><tr class="total-row"><td colspan="5">Total</td><td id="detailTotalL3S">0</td><td id="detailTotalL6S">0</td><td id="detailTotalACHCY">0</td><td id="detailTotalACHLY">0</td><td class="sales-val" id="detailTotalCY">0</td><td id="detailTotalLY">0</td><td></td></tr></tfoot>
         </table>
     </div>
 
@@ -320,16 +320,20 @@ function getFilteredDetail(){
 function renderDetailTable(){
     const data=getFilteredDetail();
     const tbody=document.getElementById('detailTableBody');
-    if(!data.length){tbody.innerHTML='<tr><td colspan="8" class="no-data">No data found</td></tr>';document.getElementById('detailTotalCY').textContent='0';document.getElementById('detailTotalLY').textContent='0';return;}
+    if(!data.length){tbody.innerHTML='<tr><td colspan="12" class="no-data">No data found</td></tr>';document.getElementById('detailTotalCY').textContent='0';document.getElementById('detailTotalLY').textContent='0';return;}
     let html='',tCY=0,tLY=0;
     data.forEach(r=>{
         const cy=+r.actCY||0,ly=+r.actLY||0;
         tCY+=cy;tLY+=ly;
         const v=ly?((cy-ly)/ly*100):0;
         const vcls=v>=0?'var-positive':'var-negative';
-        html+='<tr><td style="font-weight:600;color:#2e7d32">'+sanitize(r.brand)+'</td><td>'+sanitize(r.productGroup)+'</td><td>'+sanitize(r.subBrand)+'</td><td>'+sanitize(r.product)+'</td><td>'+sanitize(r.date)+'</td><td class="sales-val">'+cy.toLocaleString()+'</td><td>'+ly.toLocaleString()+'</td><td><span class="'+vcls+'">'+(v>=0?'+':'')+v.toFixed(1)+'%</span></td></tr>';
+        html+='<tr><td style="font-weight:600;color:#2e7d32">'+sanitize(r.brand)+'</td><td>'+sanitize(r.productGroup)+'</td><td>'+sanitize(r.subBrand)+'</td><td>'+sanitize(r.product)+'</td><td>'+sanitize(r.date)+'</td><td>'+(+(r.l3s)||0).toLocaleString()+'</td><td>'+(+(r.l6s)||0).toLocaleString()+'</td><td>'+(+(r.achCYP)||0).toLocaleString()+'</td><td>'+(+(r.achLYP)||0).toLocaleString()+'</td><td class="sales-val">'+cy.toLocaleString()+'</td><td>'+ly.toLocaleString()+'</td><td><span class="'+vcls+'">'+(v>=0?'+':'')+v.toFixed(1)+'%</span></td></tr>';
     });
     tbody.innerHTML=html;
+    document.getElementById('detailTotalL3S').textContent=data.reduce((a,r)=>a+(+(r.l3s)||0),0).toLocaleString();
+    document.getElementById('detailTotalL6S').textContent=data.reduce((a,r)=>a+(+(r.l6s)||0),0).toLocaleString();
+    document.getElementById('detailTotalACHCY').textContent=data.reduce((a,r)=>a+(+(r.achCYP)||0),0).toLocaleString();
+    document.getElementById('detailTotalACHLY').textContent=data.reduce((a,r)=>a+(+(r.achLYP)||0),0).toLocaleString();
     document.getElementById('detailTotalCY').textContent=tCY.toLocaleString();
     document.getElementById('detailTotalLY').textContent=tLY.toLocaleString();
     // Sort arrows

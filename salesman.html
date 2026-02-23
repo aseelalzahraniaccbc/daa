@@ -162,7 +162,7 @@
         <div class="login-header"><div class="login-icon">💼</div><h1>Salesman Login</h1><p>Enter your credentials to continue</p></div>
         <div id="errorMessage" class="error-message"></div>
         <form id="loginForm">
-            <div class="form-group"><label for="userName">User Name</label><input type="text" id="userName" placeholder="e.g. Aseel" required></div>
+            <div class="form-group"><label for="userName">User Name</label><input type="text" id="userName" placeholder="Enter your Username" required></div>
             <div class="form-group"><label for="userCode">User ID</label><input type="text" id="userCode" placeholder="Enter your User Code" required></div>
             <button type="submit" class="login-btn">Log In</button>
         </form>
@@ -212,9 +212,9 @@
                 <div class="toolbar-group"><label>Customer:</label><select id="filterCustomer"><option value="">All</option></select></div>
                 <div class="toolbar-group"><label>Product:</label><select id="filterProduct"><option value="">All</option></select></div>
                 <div class="toolbar-group"><label>Date:</label><select id="filterDate"><option value="">All</option></select></div>
-                <div class="toolbar-group"><label>Group By:</label><select id="groupBy"><option value="">None</option><option value="brand">Brand</option><option value="customer">Customer</option><option value="product">Product</option><option value="dayDate">Date</option></select></div>
+                <div class="toolbar-group"><label>Group By:</label><select id="groupBy"><option value="">None</option><option value="brand">Brand</option><option value="customer">Customer</option><option value="product">Product</option><option value="date">Date</option></select></div>
             </div>
-            <table class="customers-table" id="custTable"><thead><tr><th class="sortable" data-sort="customerCode">Code</th><th class="sortable" data-sort="customer">Customer</th><th class="sortable" data-sort="brand">Brand</th><th class="sortable" data-sort="product">Product</th><th class="sortable" data-sort="dayDate">Date</th><th class="sortable" data-sort="actualCY">ACT-CY</th><th class="sortable" data-sort="actualLY">ACT-LY</th></tr></thead><tbody id="customersTableBody"><tr><td colspan="7" class="no-data">Loading…</td></tr></tbody><tfoot><tr class="total-row"><td colspan="5">Total</td><td class="customer-sales"><span id="totalACTCY">0</span> SAR</td><td class="customer-sales"><span id="totalACTLY">0</span> SAR</td></tr></tfoot></table>
+            <table class="customers-table" id="custTable"><thead><tr><th class="sortable" data-sort="customerCode">Code</th><th class="sortable" data-sort="customer">Customer</th><th class="sortable" data-sort="brand">Brand</th><th class="sortable" data-sort="product">Product</th><th class="sortable" data-sort="date">Date</th><th class="sortable" data-sort="actCY">ACT-CY</th><th class="sortable" data-sort="actLY">ACT-LY</th></tr></thead><tbody id="customersTableBody"><tr><td colspan="7" class="no-data">Loading…</td></tr></tbody><tfoot><tr class="total-row"><td colspan="5">Total</td><td class="customer-sales"><span id="totalACTCY">0</span> SAR</td><td class="customer-sales"><span id="totalACTLY">0</span> SAR</td></tr></tfoot></table>
         </div>
     </div>
 </div>
@@ -329,7 +329,7 @@ async function loadFromAzure(userCode){
             salesmenData=data.salesmenData.map(r=>({salesmanCode:String(r['Salesman Code']||''),salesman:r['Salesman']||'',assignedSUP:String(r['Assigned SUP']||''),routeCode:String(r['Route Code']||''),tgt:toNum(r['TGT']),actCY:toNum(r['ACT-CY']),pctTgt:toNum(r['%TGT'])}));
         }
         if(data.masterData&&data.masterData.length){
-            masterData=data.masterData.map(r=>({supervisorCode:String(r['Supervisor Code']||''),salesmanCode:String(r['Salesman Code']||''),branchManager:r['Branch Manager']||'',routeCode:String(r['Route Code']||''),customerCode:String(r['Customer Code']||''),customer:r['Customer']||'',sector:r['Sector']||'',cls:r['Class']||'',region:r['Region']||'',branch:r['Branch']||'',brand:r['Brand']||'',productGroup:r['Product Group']||'',subBrand:r['Sub Brand']||'',product:r['Product']||'',dayDate:String(r['Date']||'').substring(0,10),l3s:toNum(r['L3S']),l6s:toNum(r['L6S']),achCYP:toNum(r['ACH CY (P)']),achLYP:toNum(r['ACH LY (P)']),actCY:toNum(r['ACT-CY']),actLY:toNum(r['ACT-LY'])}));
+            masterData=data.masterData.map(r=>({supervisorCode:String(r['Supervisor Code']||''),salesmanCode:String(r['Salesman Code']||''),branchManager:r['Branch Manager']||'',routeCode:String(r['Route Code']||''),customerCode:String(r['Customer Code']||''),customer:r['Customer']||'',sector:r['Sector']||'',cls:r['Class']||'',region:r['Region']||'',branch:r['Branch']||'',brand:r['Brand']||'',productGroup:r['Product Group']||'',subBrand:r['Sub Brand']||'',product:r['Product']||'',date:String(r['Date']||'').substring(0,10),l3s:toNum(r['L3S']),l6s:toNum(r['L6S']),achCYP:toNum(r['ACH CY (P)']),achLYP:toNum(r['ACH LY (P)']),actCY:toNum(r['ACT-CY']),actLY:toNum(r['ACT-LY'])}));
             console.log('Loaded',masterData.length,'master rows (filtered for this user only)');
         }
         return true;
@@ -398,7 +398,7 @@ function renderTable(){
     // Update sort arrows
     const table=document.getElementById('custTable');if(table)table.querySelectorAll('th.sortable').forEach(th=>{th.classList.remove('sort-asc','sort-desc');if(th.dataset.sort===smCustSortField)th.classList.add('sort-'+smCustSortDir);});
 }
-function bRow(c,cy,ly){return`<tr><td>${sanitize(c.customerCode)}</td><td class="customer-name">${sanitize(c.customer)}</td><td>${sanitize(c.brand)}</td><td>${sanitize(c.product)}</td><td>${sanitize(c.dayDate)}</td><td class="customer-sales">${cy.toLocaleString()}</td><td>${ly.toLocaleString()}</td></tr>`;}
+function bRow(c,cy,ly){return`<tr><td>${sanitize(c.customerCode)}</td><td class="customer-name">${sanitize(c.customer)}</td><td>${sanitize(c.brand)}</td><td>${sanitize(c.product)}</td><td>${sanitize(c.date)}</td><td class="customer-sales">${cy.toLocaleString()}</td><td>${ly.toLocaleString()}</td></tr>`;}
 function populateFilters(){
     const fill=(id,vals,lbl)=>{const s=document.getElementById(id);s.innerHTML=`<option value="">All ${lbl}</option>`;vals.forEach(v=>{s.innerHTML+=`<option value="${sanitize(v)}">${sanitize(v)}</option>`;});};
     fill('filterBrand',[...new Set(myCustomers.map(r=>r.brand))].sort(),'Brands');fill('filterCustomer',[...new Set(myCustomers.map(r=>r.customer))].sort(),'Customers');
