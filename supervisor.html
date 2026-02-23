@@ -201,21 +201,29 @@ const AZURE_API_URL = 'https://salesap-g4ceg7arc2bkbvfx.centralus-01.azurewebsit
 // ══ POWER AUTOMATE CONFIG (surveys only) ══
 const POWER_AUTOMATE_GET_URL = 'https://default04af0493a5b44947ab72ae37fae884.14.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/a52eaf1a49894199856439aa7e837f82/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=TKq2xFQ8rgo4juZL9h8SoNrPOH-gEe24DIOd7Jsu0Qw';
 
-let usersData=[],salesmenData=[],masterData=[],currentUser=null,mySalesmen=[],myMasterData=[];
+let usersData=[],salesmenData=[],masterData=[],currentUser=null,mySalesmen=[],myMasterData=[],serverCustomerSummary=null;
 let allSurveys=[];
 
 function sanitize(s){const d=document.createElement('div');d.textContent=String(s);return d.innerHTML;}
 function toNum(v){const n=Number(v);return isNaN(n)?0:n;}
 
+function applyApiData(data){
+    if(data.user)usersData=[{userCode:String(data.user['User Code']||''),userName:data.user['User Name']||'',role:(data.user.Role||data.user.role||'').trim()}];
+    if(data.salesmenData)salesmenData=data.salesmenData.map(r=>({salesmanCode:String(r['Salesman Code']||''),salesman:r['Salesman']||'',assignedSUP:String(r['Assigned SUP']||''),routeCode:String(r['Route Code']||''),tgt:toNum(r['TGT']),actCY:toNum(r['ACT-CY']),pctTgt:toNum(r['%TGT'])*100}));
+    if(data.masterData)masterData=data.masterData.map(r=>({supervisorCode:String(r['Supervisor Code']||''),salesmanCode:String(r['Salesman Code']||''),branchManager:r['Branch Manager']||'',routeCode:String(r['Route Code']||''),customerCode:String(r['Customer Code']||''),customer:r['Customer']||'',sector:r['Sector']||'',cls:r['Class']||'',region:r['Region']||'',branch:r['Branch']||'',brand:r['Brand']||'',productGroup:r['Product Group']||'',subBrand:r['Sub Brand']||'',product:r['Product']||'',date:String(r['Date']||'').substring(0,10),l3s:toNum(r['L3S']),l6s:toNum(r['L6S']),achCYP:toNum(r['ACH CY (P)']),achLYP:toNum(r['ACH LY (P)']),actCY:toNum(r['ACT-CY']),actLY:toNum(r['ACT-LY'])}));
+    if(data.customerSummary)serverCustomerSummary=data.customerSummary;
+    if(data.masterDataTotal)console.log('Server has',data.masterDataTotal,'master rows (not transferred)');
+    return true;
+}
+
 async function loadFromAzure(userCode){
     if(!AZURE_API_URL)return false;
+    // Client cache disabled — server handles caching for 800K+ rows
     try{
         const url=AZURE_API_URL+'?action=login&code='+encodeURIComponent(userCode);
         const r=await fetch(url);if(!r.ok)return false;
         const data=await r.json();console.log('Azure API response keys:',Object.keys(data));if(data.error){console.error('Azure API error:',data.error);return false;}
-        if(data.user)usersData=[{userCode:String(data.user['User Code']||''),userName:data.user['User Name']||'',role:(data.user.Role||data.user.role||'').trim()}];
-        if(data.salesmenData)salesmenData=data.salesmenData.map(r=>({salesmanCode:String(r['Salesman Code']||''),salesman:r['Salesman']||'',assignedSUP:String(r['Assigned SUP']||''),routeCode:String(r['Route Code']||''),tgt:toNum(r['TGT']),actCY:toNum(r['ACT-CY']),pctTgt:toNum(r['%TGT'])*100}));
-        if(data.masterData)masterData=data.masterData.map(r=>({supervisorCode:String(r['Supervisor Code']||''),salesmanCode:String(r['Salesman Code']||''),branchManager:r['Branch Manager']||'',routeCode:String(r['Route Code']||''),customerCode:String(r['Customer Code']||''),customer:r['Customer']||'',sector:r['Sector']||'',cls:r['Class']||'',region:r['Region']||'',branch:r['Branch']||'',brand:r['Brand']||'',productGroup:r['Product Group']||'',subBrand:r['Sub Brand']||'',product:r['Product']||'',date:String(r['Date']||'').substring(0,10),l3s:toNum(r['L3S']),l6s:toNum(r['L6S']),achCYP:toNum(r['ACH CY (P)']),achLYP:toNum(r['ACH LY (P)']),actCY:toNum(r['ACT-CY']),actLY:toNum(r['ACT-LY'])}));
+        applyApiData(data);
         console.log('Azure API: loaded',salesmenData.length,'salesmen,',masterData.length,'master rows');if(salesmenData.length)console.log('Sample salesman:',JSON.stringify(salesmenData[0]));if(masterData.length)console.log('Sample master:',JSON.stringify(masterData[0]));
         return true;
     }catch(e){console.error('Azure API error:',e);return false;}
@@ -271,6 +279,22 @@ let custSortField='customer',custSortDir='asc';
 let smSortField='',smSortDir='asc';
 
 function getCustomerSummaries(){
+    // Use server-aggregated summary when no filters active (much faster)
+    const q=document.getElementById('custSearch').value.toLowerCase();
+    const hasFilters=q||document.getElementById('filtSalesman').value||document.getElementById('filtCustCode').value||document.getElementById('filtCustomer').value||document.getElementById('filtRoute').value;
+    if(!hasFilters&&serverCustomerSummary&&serverCustomerSummary.length){
+        let summaries=serverCustomerSummary.map(c=>({
+            code:String(c.customerCode||''),name:c.customer||'',salesman:c.salesman||'',salesmanCode:String(c.salesmanCode||''),
+            routeCode:String(c.routeCode||''),sector:c.sector||'',cls:c.cls||'',
+            totalL3S:c.totalL3S||0,totalL6S:c.totalL6S||0,totalCY:c.totalCY||0,totalLY:c.totalLY||0,
+            varPct:c.varPct||0,rows:[]
+        }));
+        if(custSortField){
+            const m=custSortDir==='desc'?-1:1;
+            summaries.sort((a,b)=>{let va=a[custSortField],vb=b[custSortField];if(custSortField==='customer'){va=a.name;vb=b.name;}if(typeof va==='number')return(va-vb)*m;return String(va||'').localeCompare(String(vb||''))*m;});
+        }
+        return summaries;
+    }
     let d=[...myMasterData];
     const q=document.getElementById('custSearch').value.toLowerCase();
     const fS=document.getElementById('filtSalesman').value;
@@ -302,13 +326,32 @@ function getCustomerSummaries(){
     return summaries;
 }
 
-function openCustomerDetail(code){
+async function openCustomerDetail(code){
     const summaries=getCustomerSummaries();
     const cust=summaries.find(c=>c.code===code);if(!cust)return;
-    sessionStorage.setItem('customerDetailInfo',JSON.stringify({
-        customerCode:cust.code,customerName:cust.name,salesman:cust.salesman,salesmanCode:cust.salesmanCode,routeCode:cust.routeCode,spvName:currentUser.userName,spvCode:currentUser.userCode,rows:cust.rows
-    }));
-    window.open('customer_detail.html','_blank');
+    // Fetch detail rows from server for this one customer
+    try{
+        const url=AZURE_API_URL+'?action=customerDetail&code='+encodeURIComponent(currentUser.userCode)+'&customer='+encodeURIComponent(code);
+        const r=await fetch(url);
+        if(r.ok){
+            const data=await r.json();
+            const rows=(data.rows||[]).map(r=>({
+                supervisorCode:String(r['Supervisor Code']||''),salesmanCode:String(r['Salesman Code']||''),
+                routeCode:String(r['Route Code']||''),customerCode:String(r['Customer Code']||''),
+                customer:r['Customer']||'',sector:r['Sector']||'',cls:r['Class']||'',
+                brand:r['Brand']||'',productGroup:r['Product Group']||'',subBrand:r['Sub Brand']||'',
+                product:r['Product']||'',date:String(r['Date']||'').substring(0,10),
+                l3s:+(r['L3S'])||0,l6s:+(r['L6S'])||0,achCYP:+(r['ACH CY (P)'])||0,
+                achLYP:+(r['ACH LY (P)'])||0,actCY:+(r['ACT-CY'])||0,actLY:+(r['ACT-LY'])||0
+            }));
+            sessionStorage.setItem('customerDetailInfo',JSON.stringify({
+                customerCode:cust.code,customerName:cust.name,salesman:cust.salesman,
+                salesmanCode:cust.salesmanCode,routeCode:cust.routeCode,
+                spvName:currentUser.userName,spvCode:currentUser.userCode,rows:rows
+            }));
+            window.open('customer_detail.html','_blank');
+        }
+    }catch(e){console.error('Customer detail error:',e);}
 }
 
 function renderCustTable(){

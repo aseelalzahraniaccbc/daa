@@ -161,22 +161,30 @@
 <script>
 const AZURE_API_URL = 'https://salesap-g4ceg7arc2bkbvfx.centralus-01.azurewebsites.net/api/api';
 
-let usersData=[],salesmenData=[],supData=[],bsmData=[],masterData=[];
+let usersData=[],salesmenData=[],supData=[],bsmData=[],masterData=[],serverCustomerSummary=null;
 let currentUser=null,mySupervisors=[],mySalesmen=[],myMasterData=[];
 function sanitize(s){const d=document.createElement('div');d.textContent=String(s);return d.innerHTML;}
 function toNum(v){const n=Number(v);return isNaN(n)?0:n;}
 
+function applyApiData(data){
+    if(data.user)usersData=[{userCode:String(data.user['User Code']||''),userName:data.user['User Name']||'',role:(data.user.Role||data.user.role||'').trim()}];
+    if(data.salesmenData)salesmenData=data.salesmenData.map(r=>({salesmanCode:String(r['Salesman Code']||''),salesman:r['Salesman']||'',assignedSUP:String(r['Assigned SUP']||''),routeCode:String(r['Route Code']||''),tgt:toNum(r['TGT']),actCY:toNum(r['ACT-CY']),pctTgt:toNum(r['%TGT'])*100}));
+    if(data.supData)supData=data.supData.map(r=>({supervisorCode:String(r['Supervisor Code']||''),supervisor:r['Supervisor']||'',routeCode:String(r['Route Code']||''),assignedBSM:String(r['AssignedBSM']||''),tgt:toNum(r['TGT']),actCY:toNum(r['ACT-CY']),pctTgt:toNum(r['%TGT'])*100}));
+    if(data.bsmData)bsmData=data.bsmData.map(r=>({bsmCode:String(r['BSM Code']||''),branchManager:r['Branch Manager']||'',sector:r['Sector']||'',branch:r['Branch']||'',tgt:toNum(r['TGT']),actCY:toNum(r['ACT-CY']),pctTgt:toNum(r['%TGT'])*100}));
+    if(data.masterData)masterData=data.masterData.map(r=>({supervisorCode:String(r['Supervisor Code']||''),salesmanCode:String(r['Salesman Code']||''),branchManager:r['Branch Manager']||'',routeCode:String(r['Route Code']||''),customerCode:String(r['Customer Code']||''),customer:r['Customer']||'',sector:r['Sector']||'',cls:r['Class']||'',region:r['Region']||'',branch:r['Branch']||'',brand:r['Brand']||'',productGroup:r['Product Group']||'',subBrand:r['Sub Brand']||'',product:r['Product']||'',date:String(r['Date']||'').substring(0,10),l3s:toNum(r['L3S']),l6s:toNum(r['L6S']),achCYP:toNum(r['ACH CY (P)']),achLYP:toNum(r['ACH LY (P)']),actCY:toNum(r['ACT-CY']),actLY:toNum(r['ACT-LY'])}));
+    if(data.customerSummary)serverCustomerSummary=data.customerSummary;
+    if(data.masterDataTotal)console.log('Server has',data.masterDataTotal,'master rows (not transferred)');
+    return true;
+}
+
 async function loadFromAzure(userCode){
     if(!AZURE_API_URL)return false;
+    // Client cache disabled — server handles caching for 800K+ rows
     try{
         const url=AZURE_API_URL+'?action=login&code='+encodeURIComponent(userCode);
         const r=await fetch(url);if(!r.ok)return false;
         const data=await r.json();if(data.error)return false;
-        if(data.user)usersData=[{userCode:String(data.user['User Code']||''),userName:data.user['User Name']||'',role:(data.user.Role||data.user.role||'').trim()}];
-        if(data.salesmenData)salesmenData=data.salesmenData.map(r=>({salesmanCode:String(r['Salesman Code']||''),salesman:r['Salesman']||'',assignedSUP:String(r['Assigned SUP']||''),routeCode:String(r['Route Code']||''),tgt:toNum(r['TGT']),actCY:toNum(r['ACT-CY']),pctTgt:toNum(r['%TGT'])*100}));
-        if(data.supData)supData=data.supData.map(r=>({supervisorCode:String(r['Supervisor Code']||''),supervisor:r['Supervisor']||'',routeCode:String(r['Route Code']||''),assignedBSM:String(r['AssignedBSM']||''),tgt:toNum(r['TGT']),actCY:toNum(r['ACT-CY']),pctTgt:toNum(r['%TGT'])*100}));
-        if(data.bsmData)bsmData=data.bsmData.map(r=>({bsmCode:String(r['BSM Code']||''),branchManager:r['Branch Manager']||'',sector:r['Sector']||'',branch:r['Branch']||'',tgt:toNum(r['TGT']),actCY:toNum(r['ACT-CY']),pctTgt:toNum(r['%TGT'])*100}));
-        if(data.masterData)masterData=data.masterData.map(r=>({supervisorCode:String(r['Supervisor Code']||''),salesmanCode:String(r['Salesman Code']||''),branchManager:r['Branch Manager']||'',routeCode:String(r['Route Code']||''),customerCode:String(r['Customer Code']||''),customer:r['Customer']||'',sector:r['Sector']||'',cls:r['Class']||'',region:r['Region']||'',branch:r['Branch']||'',brand:r['Brand']||'',productGroup:r['Product Group']||'',subBrand:r['Sub Brand']||'',product:r['Product']||'',date:String(r['Date']||'').substring(0,10),l3s:toNum(r['L3S']),l6s:toNum(r['L6S']),achCYP:toNum(r['ACH CY (P)']),achLYP:toNum(r['ACH LY (P)']),actCY:toNum(r['ACT-CY']),actLY:toNum(r['ACT-LY'])}));
+        applyApiData(data);
         console.log('Azure API: loaded',supData.length,'SUP,',salesmenData.length,'SM,',masterData.length,'master');
         return true;
     }catch(e){console.error('Azure API error:',e);return false;}
@@ -250,6 +258,22 @@ function renderSMTable(){
 
 /* ══ TAB 3: Customer Summary (click to detail) ══ */
 function getCustomerSummaries(){
+    // Use server-aggregated summary when no filters active (much faster)
+    const q=document.getElementById('custSearch').value.toLowerCase();
+    const hasFilters=q||document.getElementById('filtSM').value||document.getElementById('filtCustCode').value||document.getElementById('filtCust').value||document.getElementById('filtRoute').value;
+    if(!hasFilters&&serverCustomerSummary&&serverCustomerSummary.length){
+        let summaries=serverCustomerSummary.map(c=>({
+            code:String(c.customerCode||''),name:c.customer||'',salesman:c.salesman||'',salesmanCode:String(c.salesmanCode||''),
+            routeCode:String(c.routeCode||''),sector:c.sector||'',cls:c.cls||'',
+            totalL3S:c.totalL3S||0,totalL6S:c.totalL6S||0,totalCY:c.totalCY||0,totalLY:c.totalLY||0,
+            varPct:c.varPct||0,rows:[]
+        }));
+        if(custSortField){
+            const m=custSortDir==='desc'?-1:1;
+            summaries.sort((a,b)=>{let va=a[custSortField],vb=b[custSortField];if(custSortField==='customer'){va=a.name;vb=b.name;}if(typeof va==='number')return(va-vb)*m;return String(va||'').localeCompare(String(vb||''))*m;});
+        }
+        return summaries;
+    }
     let d=[...myMasterData];
     const q=document.getElementById('custSearch').value.toLowerCase();
     const fSM=document.getElementById('filtSM').value;
@@ -276,13 +300,31 @@ function getCustomerSummaries(){
     return summaries;
 }
 
-function openCustomerDetail(code){
+async function openCustomerDetail(code){
     const summaries=getCustomerSummaries();
     const cust=summaries.find(c=>c.code===code);if(!cust)return;
-    sessionStorage.setItem('customerDetailInfo',JSON.stringify({
-        customerCode:cust.code,customerName:cust.name,salesman:cust.salesman,salesmanCode:cust.salesmanCode,routeCode:cust.routeCode,spvName:currentUser.userName,spvCode:currentUser.userCode,rows:cust.rows
-    }));
-    window.open('customer_detail.html','_blank');
+    try{
+        const url=AZURE_API_URL+'?action=customerDetail&code='+encodeURIComponent(currentUser.userCode)+'&customer='+encodeURIComponent(code);
+        const r=await fetch(url);
+        if(r.ok){
+            const data=await r.json();
+            const rows=(data.rows||[]).map(r=>({
+                supervisorCode:String(r['Supervisor Code']||''),salesmanCode:String(r['Salesman Code']||''),
+                routeCode:String(r['Route Code']||''),customerCode:String(r['Customer Code']||''),
+                customer:r['Customer']||'',sector:r['Sector']||'',cls:r['Class']||'',
+                brand:r['Brand']||'',productGroup:r['Product Group']||'',subBrand:r['Sub Brand']||'',
+                product:r['Product']||'',date:String(r['Date']||'').substring(0,10),
+                l3s:+(r['L3S'])||0,l6s:+(r['L6S'])||0,achCYP:+(r['ACH CY (P)'])||0,
+                achLYP:+(r['ACH LY (P)'])||0,actCY:+(r['ACT-CY'])||0,actLY:+(r['ACT-LY'])||0
+            }));
+            sessionStorage.setItem('customerDetailInfo',JSON.stringify({
+                customerCode:cust.code,customerName:cust.name,salesman:cust.salesman,
+                salesmanCode:cust.salesmanCode,routeCode:cust.routeCode,
+                spvName:currentUser.userName,spvCode:currentUser.userCode,rows:rows
+            }));
+            window.open('customer_detail.html','_blank');
+        }
+    }catch(e){console.error('Customer detail error:',e);}
 }
 
 function renderCustTable(){

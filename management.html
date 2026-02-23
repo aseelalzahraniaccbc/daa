@@ -587,7 +587,8 @@
             if(AZURE_API_URL){
                 try{
                     const r=await fetch(AZURE_API_URL+'?action=getUsers');
-                    if(r.ok){const data=await r.json();if(data.users&&data.users.length){usersData=data.users.map(r=>({userCode:String(r['User Code']||''),userName:r['User Name']||'',role:r['Role']||''}));console.log('Azure API: loaded',usersData.length,'users');return;}}
+                    if(r.ok){const data=await r.json();if(data.users&&data.users.length){usersData=data.users.map(r=>({userCode:String(r['User Code']||''),userName:r['User Name']||'',role:r['Role']||''}));try{sessionStorage.setItem(cacheKey,JSON.stringify({data,time:Date.now()}));}catch(e){}
+        console.log('Azure API: loaded',usersData.length,'users');return;}}
                 }catch(e){console.error('Azure API error:',e);}
             }
             try {
