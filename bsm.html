@@ -149,9 +149,9 @@
                     <div class="toolbar-group"><label>Route:</label><select id="filtRoute"><option value="">All</option></select></div>
                 </div>
                 <table class="data-table" id="custTable">
-                    <thead><tr><th style="width:30px"></th><th class="sortable" data-sort="code" data-table="cust">Code</th><th class="sortable" data-sort="customer" data-table="cust">Customer</th><th class="sortable" data-sort="salesman" data-table="cust">Salesman</th><th class="sortable" data-sort="routeCode" data-table="cust">Route</th><th class="sortable" data-sort="totalL3S" data-table="cust">L3S</th><th class="sortable" data-sort="totalL6S" data-table="cust">L6S</th><th class="sortable" data-sort="totalCY" data-table="cust">ACT-CY</th><th class="sortable" data-sort="totalLY" data-table="cust">ACT-LY</th><th class="sortable" data-sort="varPct" data-table="cust">%YoY Growth</th></tr></thead>
-                    <tbody id="custTableBody"><tr><td colspan="10" class="no-data">Loading…</td></tr></tbody>
-                    <tfoot><tr class="total-row"><td colspan="5">Total</td><td class="sales-val" id="custTotL3S">0</td><td class="sales-val" id="custTotL6S">0</td><td class="sales-val" id="custTotCY">0</td><td class="sales-val" id="custTotLY">0</td><td></td></tr></tfoot>
+                    <thead><tr><th style="width:30px"></th><th class="sortable" data-sort="code" data-table="cust">Code</th><th class="sortable" data-sort="customer" data-table="cust">Customer</th><th class="sortable" data-sort="salesman" data-table="cust">Salesman</th><th class="sortable" data-sort="routeCode" data-table="cust">Route</th><th class="sortable" data-sort="sector" data-table="cust">Sector</th><th class="sortable" data-sort="cls" data-table="cust">Class</th><th class="sortable" data-sort="totalL3S" data-table="cust">L3S</th><th class="sortable" data-sort="totalL6S" data-table="cust">L6S</th><th class="sortable" data-sort="totalCY" data-table="cust">ACT-CY</th><th class="sortable" data-sort="totalLY" data-table="cust">ACT-LY</th><th class="sortable" data-sort="varPct" data-table="cust">%YoY Growth</th></tr></thead>
+                    <tbody id="custTableBody"><tr><td colspan="12" class="no-data">Loading…</td></tr></tbody>
+                    <tfoot><tr class="total-row"><td colspan="7">Total</td><td class="sales-val" id="custTotL3S">0</td><td class="sales-val" id="custTotL6S">0</td><td class="sales-val" id="custTotCY">0</td><td class="sales-val" id="custTotLY">0</td><td></td></tr></tfoot>
                 </table>
             </div>
         </div>
@@ -264,7 +264,7 @@ function getCustomerSummaries(){
     const map={};
     d.forEach(r=>{
         const key=r.customerCode;
-        if(!map[key]){const sm=mySalesmen.find(s=>String(s.salesmanCode)==String(r.salesmanCode));map[key]={code:key,name:r.customer,salesman:sm?sm.salesman:String(r.salesmanCode),routeCode:r.routeCode,salesmanCode:r.salesmanCode,totalCY:0,totalLY:0,totalL3S:0,totalL6S:0,rows:[]};}
+        if(!map[key]){const sm=mySalesmen.find(s=>String(s.salesmanCode)==String(r.salesmanCode));map[key]={code:key,name:r.customer,salesman:sm?sm.salesman:String(r.salesmanCode),routeCode:r.routeCode,salesmanCode:r.salesmanCode,sector:r.sector||'',cls:r.cls||'',totalCY:0,totalLY:0,totalL3S:0,totalL6S:0,rows:[]};}
         map[key].totalCY+=(+(r.actCY)||0);map[key].totalLY+=(+(r.actLY)||0);map[key].totalL3S+=(+(r.l3s)||0);map[key].totalL6S+=(+(r.l6s)||0);map[key].rows.push(r);
     });
     let summaries=Object.values(map);
@@ -297,6 +297,7 @@ function renderCustTable(){
         html+=`<tr class="cust-summary-row" onclick="openCustomerDetail('${sanitize(c.code)}')">
             <td>🔗</td><td style="font-weight:600">${sanitize(c.code)}</td><td style="font-weight:600;color:#333">${sanitize(c.name)}</td>
             <td>${sanitize(c.salesman)}</td><td>${sanitize(c.routeCode)}</td>
+            <td>${sanitize(c.sector)}</td><td>${sanitize(c.cls)}</td>
             <td>${c.totalL3S.toLocaleString()}</td><td>${c.totalL6S.toLocaleString()}</td>
             <td class="sales-val">${c.totalCY.toLocaleString()}</td><td>${c.totalLY.toLocaleString()}</td><td><span class="${varCls}">${varStr}</span></td></tr>`;
     });
