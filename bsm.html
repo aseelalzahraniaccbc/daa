@@ -67,6 +67,11 @@
         th.sortable.sort-asc::after{content:'▲';opacity:0.8;color:#e65100;}
         th.sortable.sort-desc::after{content:'▼';opacity:0.8;color:#e65100;}
         th.sortable:hover{background:rgba(0,0,0,0.04);}
+        .cust-summary-row{cursor:pointer;transition:background 0.15s;}
+        .cust-summary-row:hover{background:#e8f5e9 !important;}
+        .cust-summary-row td:first-child{text-align:center;font-size:0.85em;color:#888;}
+        .var-positive{color:#2e7d32;font-weight:600;}
+        .var-negative{color:#c62828;font-weight:600;}
     </style>
 </head>
 <body>
@@ -77,7 +82,7 @@
         <div id="errorMessage" class="error-message"></div>
         <form id="loginForm">
             <div class="form-group"><label for="userName">User Name</label><input type="text" id="userName" placeholder="Enter your Username" required></div>
-            <div class="form-group"><label for="userCode">User ID</label><input type="text" id="userCode" placeholder="e.g. 3001" required></div>
+            <div class="form-group"><label for="userCode">User ID</label><input type="text" id="userCode" placeholder="Enter your User Code" required></div>
             <button type="submit" class="login-btn">Log In</button>
         </form>
         <div class="back-link"><a href="index.html">← Back to Role Selection</a></div>
@@ -96,7 +101,7 @@
             <div class="summary-card"><div class="icon">👥</div><div class="value" id="sumSM">0</div><div class="label">Salesmen</div></div>
             <div class="summary-card"><div class="icon">🎯</div><div class="value" id="sumTgt">0</div><div class="label">Total Target</div></div>
             <div class="summary-card"><div class="icon">💰</div><div class="value" id="sumAct">0</div><div class="label">Total Actual</div></div>
-            <div class="summary-card"><div class="icon">📊</div><div class="value" id="sumPct">0%</div><div class="label">Achievement</div></div>
+            <div class="summary-card"><div class="icon">📊</div><div class="value" id="sumPct">0%</div><div class="label">Overall Growth</div></div>
             <div class="summary-card"><div class="icon">🏪</div><div class="value" id="sumCust">0</div><div class="label">Customers</div></div>
         </div>
 
@@ -132,23 +137,21 @@
             </div>
         </div>
 
-        <!-- TAB 3: All Customers -->
+        <!-- TAB 3: All Customers (Summary → Click for Detail) -->
         <div id="tab-customers" class="tab-content">
             <div class="section-card">
-                <h3>🏪 All Customer Sales Data</h3>
+                <h3>🏪 All Customer Sales</h3>
                 <div class="toolbar">
                     <input type="text" id="custSearch" placeholder="🔍 Search...">
-                    <div class="toolbar-group"><label>Supervisor:</label><select id="filtSPV"><option value="">All</option></select></div>
                     <div class="toolbar-group"><label>Salesman:</label><select id="filtSM"><option value="">All</option></select></div>
-                    <div class="toolbar-group"><label>Brand:</label><select id="filtBrand"><option value="">All</option></select></div>
+                    <div class="toolbar-group"><label>Customer Code:</label><select id="filtCustCode"><option value="">All</option></select></div>
                     <div class="toolbar-group"><label>Customer:</label><select id="filtCust"><option value="">All</option></select></div>
-                    <div class="toolbar-group"><label>Date:</label><select id="filtDate"><option value="">All</option></select></div>
-                    <div class="toolbar-group"><label>Group By:</label><select id="custGroupBy"><option value="">None</option><option value="supervisor">Supervisor</option><option value="salesman">Salesman</option><option value="brand">Brand</option><option value="customer">Customer</option><option value="date">Date</option></select></div>
+                    <div class="toolbar-group"><label>Route:</label><select id="filtRoute"><option value="">All</option></select></div>
                 </div>
-                <table class="data-table">
-                    <thead><tr><th class="sortable" data-sort="supervisor" data-table="cust">Supervisor</th><th class="sortable" data-sort="salesman" data-table="cust">Salesman</th><th class="sortable" data-sort="routeCode" data-table="cust">Route</th><th class="sortable" data-sort="customerCode" data-table="cust">Code</th><th class="sortable" data-sort="customer" data-table="cust">Customer</th><th class="sortable" data-sort="brand" data-table="cust">Brand</th><th class="sortable" data-sort="product" data-table="cust">Product</th><th class="sortable" data-sort="date" data-table="cust">Date</th><th class="sortable" data-sort="actCY" data-table="cust">ACT-CY</th><th class="sortable" data-sort="actLY" data-table="cust">ACT-LY</th></tr></thead>
+                <table class="data-table" id="custTable">
+                    <thead><tr><th style="width:30px"></th><th class="sortable" data-sort="code" data-table="cust">Code</th><th class="sortable" data-sort="customer" data-table="cust">Customer</th><th class="sortable" data-sort="salesman" data-table="cust">Salesman</th><th class="sortable" data-sort="routeCode" data-table="cust">Route</th><th class="sortable" data-sort="totalL3S" data-table="cust">L3S</th><th class="sortable" data-sort="totalL6S" data-table="cust">L6S</th><th class="sortable" data-sort="totalCY" data-table="cust">ACT-CY</th><th class="sortable" data-sort="totalLY" data-table="cust">ACT-LY</th><th class="sortable" data-sort="varPct" data-table="cust">%YoY Growth</th></tr></thead>
                     <tbody id="custTableBody"><tr><td colspan="10" class="no-data">Loading…</td></tr></tbody>
-                    <tfoot><tr class="total-row"><td colspan="8">Total</td><td class="sales-val"><span id="custTotCY">0</span></td><td class="sales-val"><span id="custTotLY">0</span></td></tr></tfoot>
+                    <tfoot><tr class="total-row"><td colspan="5">Total</td><td class="sales-val" id="custTotL3S">0</td><td class="sales-val" id="custTotL6S">0</td><td class="sales-val" id="custTotCY">0</td><td class="sales-val" id="custTotLY">0</td><td></td></tr></tfoot>
                 </table>
             </div>
         </div>
@@ -170,9 +173,9 @@ async function loadFromAzure(userCode){
         const r=await fetch(url);if(!r.ok)return false;
         const data=await r.json();if(data.error)return false;
         if(data.user)usersData=[{userCode:String(data.user['User Code']||''),userName:data.user['User Name']||'',role:(data.user.Role||data.user.role||'').trim()}];
-        if(data.salesmenData)salesmenData=data.salesmenData.map(r=>({salesmanCode:String(r['Salesman Code']||''),salesman:r['Salesman']||'',assignedSUP:String(r['Assigned SUP']||''),routeCode:String(r['Route Code']||''),tgt:toNum(r['TGT']),actCY:toNum(r['ACT-CY']),pctTgt:toNum(r['%TGT'])}));
-        if(data.supData)supData=data.supData.map(r=>({supervisorCode:String(r['Supervisor Code']||''),supervisor:r['Supervisor']||'',routeCode:String(r['Route Code']||''),assignedBSM:String(r['AssignedBSM']||''),tgt:toNum(r['TGT']),actCY:toNum(r['ACT-CY']),pctTgt:toNum(r['%TGT'])}));
-        if(data.bsmData)bsmData=data.bsmData.map(r=>({bsmCode:String(r['BSM Code']||''),branchManager:r['Branch Manager']||'',sector:r['Sector']||'',branch:r['Branch']||'',tgt:toNum(r['TGT']),actCY:toNum(r['ACT-CY']),pctTgt:toNum(r['%TGT'])}));
+        if(data.salesmenData)salesmenData=data.salesmenData.map(r=>({salesmanCode:String(r['Salesman Code']||''),salesman:r['Salesman']||'',assignedSUP:String(r['Assigned SUP']||''),routeCode:String(r['Route Code']||''),tgt:toNum(r['TGT']),actCY:toNum(r['ACT-CY']),pctTgt:toNum(r['%TGT'])*100}));
+        if(data.supData)supData=data.supData.map(r=>({supervisorCode:String(r['Supervisor Code']||''),supervisor:r['Supervisor']||'',routeCode:String(r['Route Code']||''),assignedBSM:String(r['AssignedBSM']||''),tgt:toNum(r['TGT']),actCY:toNum(r['ACT-CY']),pctTgt:toNum(r['%TGT'])*100}));
+        if(data.bsmData)bsmData=data.bsmData.map(r=>({bsmCode:String(r['BSM Code']||''),branchManager:r['Branch Manager']||'',sector:r['Sector']||'',branch:r['Branch']||'',tgt:toNum(r['TGT']),actCY:toNum(r['ACT-CY']),pctTgt:toNum(r['%TGT'])*100}));
         if(data.masterData)masterData=data.masterData.map(r=>({supervisorCode:String(r['Supervisor Code']||''),salesmanCode:String(r['Salesman Code']||''),branchManager:r['Branch Manager']||'',routeCode:String(r['Route Code']||''),customerCode:String(r['Customer Code']||''),customer:r['Customer']||'',sector:r['Sector']||'',cls:r['Class']||'',region:r['Region']||'',branch:r['Branch']||'',brand:r['Brand']||'',productGroup:r['Product Group']||'',subBrand:r['Sub Brand']||'',product:r['Product']||'',date:String(r['Date']||'').substring(0,10),l3s:toNum(r['L3S']),l6s:toNum(r['L6S']),achCYP:toNum(r['ACH CY (P)']),achLYP:toNum(r['ACH LY (P)']),actCY:toNum(r['ACT-CY']),actLY:toNum(r['ACT-LY'])}));
         console.log('Azure API: loaded',supData.length,'SUP,',salesmenData.length,'SM,',masterData.length,'master');
         return true;
@@ -207,14 +210,15 @@ function renderSPVTable(){
         spvMap[s.supervisorCode].actCY+=s.actCY;
     });
     let spvList=Object.values(spvMap);
-    spvList.forEach(s=>{s.pctTgt=s.tgt?(s.actCY/s.tgt*100):0;s.remaining=s.tgt-s.actCY;});
+    spvList.forEach(s=>{s.pctTgt=s.tgt?((s.actCY-s.tgt)/s.tgt*100):0;s.remaining=s.tgt-s.actCY;});
     if(supSortField){const m=supSortDir==='desc'?-1:1;spvList.sort((a,b)=>{const va=a[supSortField],vb=b[supSortField];if(typeof va==='number')return(va-vb)*m;return String(va||'').localeCompare(String(vb||''))*m;});}
     if(!spvList.length){tbody.innerHTML='<tr><td colspan="8" class="no-data">No supervisors assigned</td></tr>';return;}
     let html='';
     spvList.forEach(s=>{
         const pct=s.pctTgt;const rem=s.remaining;
-        const cls=pct>=95?'pct-high':pct>=85?'pct-mid':'pct-low';
-        html+=`<tr><td>${sanitize(s.supervisorCode)}</td><td style="font-weight:600;color:#333">${sanitize(s.supervisor)}</td><td>${s.routes.join(', ')}</td><td>${s.tgt.toLocaleString()}</td><td class="sales-val">${s.actCY.toLocaleString()}</td><td><span class="pct-badge ${cls}">${pct.toFixed(1)}%</span></td><td>${rem>0?rem.toLocaleString():'—'}</td><td><div class="mini-progress"><div class="mini-progress-fill" style="width:${Math.min(pct,100)}%"></div></div></td></tr>`;
+        const cls=pct>=0?'pct-high':'pct-low';
+        const achPct=s.tgt?(s.actCY/s.tgt*100):0;
+        html+=`<tr><td>${sanitize(s.supervisorCode)}</td><td style="font-weight:600;color:#333">${sanitize(s.supervisor)}</td><td>${s.routes.join(', ')}</td><td>${s.tgt.toLocaleString()}</td><td class="sales-val">${s.actCY.toLocaleString()}</td><td><span class="pct-badge ${cls}">${(pct>=0?'+':'')+pct.toFixed(1)}%</span></td><td>${rem>0?rem.toLocaleString():'—'}</td><td><div class="mini-progress"><div class="mini-progress-fill" style="width:${Math.min(achPct,100)}%"></div></div></td></tr>`;
     });
     tbody.innerHTML=html;
     document.querySelectorAll('th.sortable[data-table="sup"]').forEach(th=>{th.classList.remove('sort-asc','sort-desc');if(th.dataset.sort===supSortField)th.classList.add('sort-'+supSortDir);});
@@ -232,68 +236,86 @@ function renderSMTable(){
     let html='',tT=0,tA=0;
     data.forEach(s=>{
         const rem=s.tgt-s.actCY;const pct=s.pctTgt;
-        const cls=pct>=95?'pct-high':pct>=85?'pct-mid':'pct-low';
+        const cls=pct>=0?'pct-high':'pct-low';
+        const achPct=s.tgt?(s.actCY/s.tgt*100):0;
         tT+=s.tgt;tA+=s.actCY;
-        html+=`<tr><td>${sanitize(s.salesmanCode)}</td><td style="font-weight:600;color:#333">${sanitize(s.salesman)}</td><td>${sanitize(s.routeCode)}</td><td>${sanitize(s.supervisor)}</td><td>${s.tgt.toLocaleString()}</td><td class="sales-val">${s.actCY.toLocaleString()}</td><td><span class="pct-badge ${cls}">${pct.toFixed(1)}%</span></td><td>${rem>0?rem.toLocaleString():'—'}</td><td><div class="mini-progress"><div class="mini-progress-fill" style="width:${Math.min(pct,100)}%"></div></div></td></tr>`;
+        html+=`<tr><td>${sanitize(s.salesmanCode)}</td><td style="font-weight:600;color:#333">${sanitize(s.salesman)}</td><td>${sanitize(s.routeCode)}</td><td>${sanitize(s.supervisor)}</td><td>${s.tgt.toLocaleString()}</td><td class="sales-val">${s.actCY.toLocaleString()}</td><td><span class="pct-badge ${cls}">${(pct>=0?'+':'')+pct.toFixed(1)}%</span></td><td>${rem>0?rem.toLocaleString():'—'}</td><td><div class="mini-progress"><div class="mini-progress-fill" style="width:${Math.min(achPct,100)}%"></div></div></td></tr>`;
     });
     tbody.innerHTML=html;
-    const oP=tT?(tA/tT*100):0;
+    const oP=tT?((tA-tT)/tT*100):0;
     document.getElementById('smTotTgt').textContent=tT.toLocaleString();document.getElementById('smTotAct').textContent=tA.toLocaleString();
-    document.getElementById('smTotPct').textContent=oP.toFixed(1)+'%';document.getElementById('smTotRem').textContent=(tT-tA>0?(tT-tA).toLocaleString():'—');
+    document.getElementById('smTotPct').textContent=(oP>=0?'+':'')+oP.toFixed(1)+'%';document.getElementById('smTotRem').textContent=(tT-tA>0?(tT-tA).toLocaleString():'—');
     document.querySelectorAll('th.sortable[data-table="sm"]').forEach(th=>{th.classList.remove('sort-asc','sort-desc');if(th.dataset.sort===smSortField2)th.classList.add('sort-'+smSortDir2);});
 }
 
-/* ══ TAB 3: All Customers ══ */
-function getCustFiltered(){
-    const q=document.getElementById('custSearch').value.toLowerCase();
-    const fSPV=document.getElementById('filtSPV').value,fSM=document.getElementById('filtSM').value,fB=document.getElementById('filtBrand').value,fC=document.getElementById('filtCust').value,fD=document.getElementById('filtDate').value;
+/* ══ TAB 3: Customer Summary (click to detail) ══ */
+function getCustomerSummaries(){
     let d=[...myMasterData];
-    if(fSPV)d=d.filter(r=>String(r.assignedSUP)===fSPV);
+    const q=document.getElementById('custSearch').value.toLowerCase();
+    const fSM=document.getElementById('filtSM').value;
+    const fCC=document.getElementById('filtCustCode').value;
+    const fC=document.getElementById('filtCust').value;
+    const fR=document.getElementById('filtRoute').value;
     if(fSM)d=d.filter(r=>String(r.salesmanCode)===fSM);
-    if(fB)d=d.filter(r=>r.brand===fB);if(fC)d=d.filter(r=>r.customer===fC);if(fD)d=d.filter(r=>r.date===fD);
-    if(q)d=d.filter(r=>[r.customerCode,r.customer,r.brand,r.product,r.date,String(r.salesmanCode)].some(v=>String(v).toLowerCase().includes(q)));
-    // Add computed fields for sorting
-    d.forEach(r=>{const spv=mySupervisors.find(x=>String(x.supervisorCode)==String(r.supervisorCode));r.supervisor=spv?spv.supervisor:String(r.assignedSUP);const sm=mySalesmen.find(x=>String(x.salesmanCode)==String(r.salesmanCode));r.salesman=sm?sm.salesman:String(r.salesmanCode);});
-    if(custSortField){const m=custSortDir==='desc'?-1:1;d.sort((a,b)=>{const va=a[custSortField],vb=b[custSortField];if(typeof va==='number')return(va-vb)*m;return String(va||'').localeCompare(String(vb||''))*m;});}
-    return d;
+    if(fCC)d=d.filter(r=>String(r.customerCode)===fCC);
+    if(fC)d=d.filter(r=>r.customer===fC);
+    if(fR)d=d.filter(r=>String(r.routeCode)===fR);
+    if(q)d=d.filter(r=>[r.customerCode,r.customer,r.brand,r.product,String(r.salesmanCode),String(r.routeCode)].some(v=>String(v).toLowerCase().includes(q)));
+    const map={};
+    d.forEach(r=>{
+        const key=r.customerCode;
+        if(!map[key]){const sm=mySalesmen.find(s=>String(s.salesmanCode)==String(r.salesmanCode));map[key]={code:key,name:r.customer,salesman:sm?sm.salesman:String(r.salesmanCode),routeCode:r.routeCode,salesmanCode:r.salesmanCode,totalCY:0,totalLY:0,totalL3S:0,totalL6S:0,rows:[]};}
+        map[key].totalCY+=(+(r.actCY)||0);map[key].totalLY+=(+(r.actLY)||0);map[key].totalL3S+=(+(r.l3s)||0);map[key].totalL6S+=(+(r.l6s)||0);map[key].rows.push(r);
+    });
+    let summaries=Object.values(map);
+    summaries.forEach(c=>{c.varPct=c.totalLY?((c.totalCY-c.totalLY)/c.totalLY*100):0;});
+    if(custSortField){
+        const m=custSortDir==='desc'?-1:1;
+        summaries.sort((a,b)=>{let va=a[custSortField],vb=b[custSortField];if(custSortField==='customer'){va=a.name;vb=b.name;}if(typeof va==='number')return(va-vb)*m;return String(va||'').localeCompare(String(vb||''))*m;});
+    }
+    return summaries;
+}
+
+function openCustomerDetail(code){
+    const summaries=getCustomerSummaries();
+    const cust=summaries.find(c=>c.code===code);if(!cust)return;
+    sessionStorage.setItem('customerDetailInfo',JSON.stringify({
+        customerCode:cust.code,customerName:cust.name,salesman:cust.salesman,salesmanCode:cust.salesmanCode,routeCode:cust.routeCode,spvName:currentUser.userName,spvCode:currentUser.userCode,rows:cust.rows
+    }));
+    window.open('customer_detail.html','_blank');
 }
 
 function renderCustTable(){
-    const data=getCustFiltered(),g=document.getElementById('custGroupBy').value,tbody=document.getElementById('custTableBody');
-    if(!data.length){tbody.innerHTML='<tr><td colspan="10" class="no-data">No data found</td></tr>';document.getElementById('custTotCY').textContent='0';document.getElementById('custTotLY').textContent='0';return;}
+    const summaries=getCustomerSummaries();
+    const tbody=document.getElementById('custTableBody');
+    if(!summaries.length){tbody.innerHTML='<tr><td colspan="10" class="no-data">No data found</td></tr>';document.getElementById('custTotCY').textContent='0';document.getElementById('custTotLY').textContent='0';return;}
     let html='',tCY=0,tLY=0;
-    const getName=(r,field)=>{
-        if(field==='supervisor'){const sp=mySupervisors.find(x=>String(x.supervisorCode)==String(r.supervisorCode));return sp?sp.supervisor:String(r.assignedSUP);}
-        if(field==='salesman'){const sm=mySalesmen.find(x=>String(x.salesmanCode)==String(r.salesmanCode));return sm?sm.salesman:String(r.salesmanCode);}
-        return r[field];
-    };
-    if(g){
-        const groups={};data.forEach(r=>{const k=getName(r,g);if(!groups[k])groups[k]=[];groups[k].push(r);});
-        Object.keys(groups).sort().forEach(k=>{const rows=groups[k];let sCY=0,sLY=0;
-            const label=g==='date'?'Date':g.charAt(0).toUpperCase()+g.slice(1);
-            html+=`<tr class="group-header-row"><td colspan="10">${sanitize(label)}: ${sanitize(k)} (${rows.length})</td></tr>`;
-            rows.forEach(c=>{const cy=+c.actCY||0,ly=+c.actLY||0;sCY+=cy;sLY+=ly;html+=cRow(c,cy,ly);});
-            html+=`<tr class="group-subtotal-row"><td colspan="8">Subtotal — ${sanitize(k)}</td><td>${sCY.toLocaleString()}</td><td>${sLY.toLocaleString()}</td></tr>`;tCY+=sCY;tLY+=sLY;});
-    }else{data.forEach(c=>{const cy=+c.actCY||0,ly=+c.actLY||0;tCY+=cy;tLY+=ly;html+=cRow(c,cy,ly);});}
-    tbody.innerHTML=html;document.getElementById('custTotCY').textContent=tCY.toLocaleString();document.getElementById('custTotLY').textContent=tLY.toLocaleString();
+    summaries.forEach(c=>{
+        tCY+=c.totalCY;tLY+=c.totalLY;
+        const varCls=c.varPct>=0?'var-positive':'var-negative';
+        const varStr=(c.varPct>=0?'+':'')+c.varPct.toFixed(1)+'%';
+        html+=`<tr class="cust-summary-row" onclick="openCustomerDetail('${sanitize(c.code)}')">
+            <td>🔗</td><td style="font-weight:600">${sanitize(c.code)}</td><td style="font-weight:600;color:#333">${sanitize(c.name)}</td>
+            <td>${sanitize(c.salesman)}</td><td>${sanitize(c.routeCode)}</td>
+            <td>${c.totalL3S.toLocaleString()}</td><td>${c.totalL6S.toLocaleString()}</td>
+            <td class="sales-val">${c.totalCY.toLocaleString()}</td><td>${c.totalLY.toLocaleString()}</td><td><span class="${varCls}">${varStr}</span></td></tr>`;
+    });
+    tbody.innerHTML=html;
+    document.getElementById('custTotL3S').textContent=summaries.reduce((a,c)=>a+c.totalL3S,0).toLocaleString();
+    document.getElementById('custTotL6S').textContent=summaries.reduce((a,c)=>a+c.totalL6S,0).toLocaleString();
+    document.getElementById('custTotCY').textContent=tCY.toLocaleString();document.getElementById('custTotLY').textContent=tLY.toLocaleString();
     document.querySelectorAll('th.sortable[data-table="cust"]').forEach(th=>{th.classList.remove('sort-asc','sort-desc');if(th.dataset.sort===custSortField)th.classList.add('sort-'+custSortDir);});
 }
 
-function cRow(c,cy,ly){
-    const spv=mySupervisors.find(x=>x.supervisorCode==c.assignedSUP);const spvN=spv?spv.supervisor:c.assignedSUP;
-    const sm=mySalesmen.find(x=>x.salesmanCode==c.salesmanCode);const smN=sm?sm.salesman:c.salesmanCode;
-    return`<tr><td>${sanitize(spvN)}</td><td style="font-weight:500">${sanitize(smN)}</td><td>${sanitize(c.routeCode)}</td><td>${sanitize(c.customerCode)}</td><td style="font-weight:500;color:#333">${sanitize(c.customer)}</td><td>${sanitize(c.brand)}</td><td>${sanitize(c.product)}</td><td>${sanitize(c.date)}</td><td class="sales-val">${cy.toLocaleString()}</td><td>${ly.toLocaleString()}</td></tr>`;
-}
-
 function populateFilters(){
-    const fill=(id,vals,lbl)=>{const s=document.getElementById(id);s.innerHTML=`<option value="">All ${lbl}</option>`;vals.forEach(v=>{s.innerHTML+=`<option value="${sanitize(v[0])}">${sanitize(v[1])}</option>`;});};
+    const fill=(id,vals,lbl)=>{const el=document.getElementById(id);if(!el)return;el.innerHTML=`<option value="">All ${lbl}</option>`;vals.forEach(v=>{el.innerHTML+=`<option value="${sanitize(v[0])}">${sanitize(v[1])}</option>`;});};
     const spvUniq=[...new Map(mySupervisors.map(s=>[s.supervisorCode,s])).values()];
     const spvOpts=spvUniq.map(s=>[String(s.supervisorCode),`${s.supervisor} (${s.supervisorCode})`]);
-    fill('filtSPV',spvOpts,'Supervisors');fill('smFiltSPV',spvOpts,'Supervisors');
+    fill('smFiltSPV',spvOpts,'Supervisors');
     fill('filtSM',mySalesmen.map(s=>[String(s.salesmanCode),`${s.salesman} (${s.salesmanCode})`]),'Salesmen');
-    fill('filtBrand',[...new Set(myMasterData.map(r=>r.brand))].sort().map(v=>[v,v]),'Brands');
+    fill('filtCustCode',[...new Set(myMasterData.map(r=>r.customerCode))].sort().map(v=>[v,v]),'Codes');
     fill('filtCust',[...new Set(myMasterData.map(r=>r.customer))].sort().map(v=>[v,v]),'Customers');
-    fill('filtDate',[...new Set(myMasterData.map(r=>r.date))].sort().map(v=>[v,v]),'Dates');
+    fill('filtRoute',[...new Set(myMasterData.map(r=>String(r.routeCode)))].sort((a,b)=>Number(a)-Number(b)).map(v=>[v,v]),'Routes');
 }
 
 function showDashboard(user){
@@ -321,14 +343,15 @@ function showDashboard(user){
     document.getElementById('sumSM').textContent=mySalesmen.length;
     document.getElementById('sumTgt').textContent=tT.toLocaleString();
     document.getElementById('sumAct').textContent=tA.toLocaleString();
-    document.getElementById('sumPct').textContent=(tT?(tA/tT*100):0).toFixed(1)+'%';
+    const growth=tT?((tA-tT)/tT*100):0;
+    document.getElementById('sumPct').textContent=(growth>=0?'+':'')+growth.toFixed(1)+'%';
     document.getElementById('sumCust').textContent=[...new Set(myMasterData.map(r=>r.customerCode))].length;
 
     populateFilters();renderSPVTable();renderSMTable();renderCustTable();
 }
 
 document.addEventListener('DOMContentLoaded',()=>{
-    ['custSearch','filtSPV','filtSM','filtBrand','filtCust','filtDate','custGroupBy'].forEach(id=>{
+    ['custSearch','filtSM','filtCustCode','filtCust','filtRoute'].forEach(id=>{
         const el=document.getElementById(id);if(el)el.addEventListener(el.tagName==='INPUT'?'input':'change',renderCustTable);
     });
     document.getElementById('smFiltSPV').addEventListener('change',renderSMTable);

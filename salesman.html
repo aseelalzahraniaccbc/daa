@@ -326,7 +326,7 @@ async function loadFromAzure(userCode){
             usersData=[{userCode:String(data.user['User Code']||''),userName:data.user['User Name']||'',role:(data.user.Role||data.user.role||'').trim()}];
         }
         if(data.salesmenData&&data.salesmenData.length){
-            salesmenData=data.salesmenData.map(r=>({salesmanCode:String(r['Salesman Code']||''),salesman:r['Salesman']||'',assignedSUP:String(r['Assigned SUP']||''),routeCode:String(r['Route Code']||''),tgt:toNum(r['TGT']),actCY:toNum(r['ACT-CY']),pctTgt:toNum(r['%TGT'])}));
+            salesmenData=data.salesmenData.map(r=>({salesmanCode:String(r['Salesman Code']||''),salesman:r['Salesman']||'',assignedSUP:String(r['Assigned SUP']||''),routeCode:String(r['Route Code']||''),tgt:toNum(r['TGT']),actCY:toNum(r['ACT-CY']),pctTgt:toNum(r['%TGT'])*100}));
         }
         if(data.masterData&&data.masterData.length){
             masterData=data.masterData.map(r=>({supervisorCode:String(r['Supervisor Code']||''),salesmanCode:String(r['Salesman Code']||''),branchManager:r['Branch Manager']||'',routeCode:String(r['Route Code']||''),customerCode:String(r['Customer Code']||''),customer:r['Customer']||'',sector:r['Sector']||'',cls:r['Class']||'',region:r['Region']||'',branch:r['Branch']||'',brand:r['Brand']||'',productGroup:r['Product Group']||'',subBrand:r['Sub Brand']||'',product:r['Product']||'',date:String(r['Date']||'').substring(0,10),l3s:toNum(r['L3S']),l6s:toNum(r['L6S']),achCYP:toNum(r['ACH CY (P)']),achLYP:toNum(r['ACH LY (P)']),actCY:toNum(r['ACT-CY']),actLY:toNum(r['ACT-LY'])}));
@@ -597,12 +597,12 @@ function renderSurveyHistory(){
 function showDashboard(user,sr){
     document.getElementById('loginScreen').style.display='none';document.getElementById('dashboard').classList.add('active');
     document.getElementById('dashboardUserName').textContent=sanitize(user.userName);document.getElementById('dashboardCode').textContent=sanitize(user.userCode);document.getElementById('routeCodeDisplay').textContent=sanitize(sr.routeCode);
-    const tgt=sr.tgt,act=sr.actCY,pct=sr.tgtPercent,rem=tgt-act;
+    const tgt=sr.tgt,act=sr.actCY,pct=sr.pctTgt,rem=tgt-act,achPct=tgt?(act/tgt*100):0;
     document.getElementById('targetValue').textContent=tgt.toLocaleString();document.getElementById('salesValue').textContent=act.toLocaleString();
-    document.getElementById('achievementValue').textContent=pct.toFixed(1);document.getElementById('remainingValue').textContent=Math.abs(rem).toLocaleString();
-    document.getElementById('progressPercent').textContent=pct.toFixed(1)+'%';setTimeout(()=>{document.getElementById('progressFill').style.width=Math.min(pct,100)+'%';},100);
+    document.getElementById('achievementValue').textContent=(pct>=0?'+':'')+pct.toFixed(1)+'%';document.getElementById('remainingValue').textContent=Math.abs(rem).toLocaleString();
+    document.getElementById('progressPercent').textContent=achPct.toFixed(1)+'%';setTimeout(()=>{document.getElementById('progressFill').style.width=Math.min(achPct,100)+'%';},100);
     const b=document.getElementById('achievementBadge');
-    b.innerHTML=pct>=100?'<span class="achievement-badge badge-success">🎉 Target Achieved!</span>':pct>=90?'<span class="achievement-badge badge-warning">⚡ Almost There!</span>':pct>=75?'<span class="achievement-badge badge-warning">📈 Keep Going!</span>':'<span class="achievement-badge badge-danger">⚠️ Needs Attention</span>';
+    b.innerHTML=achPct>=100?'<span class="achievement-badge badge-success">🎉 Target Achieved!</span>':achPct>=90?'<span class="achievement-badge badge-warning">⚡ Almost There!</span>':achPct>=75?'<span class="achievement-badge badge-warning">📈 Keep Going!</span>':'<span class="achievement-badge badge-danger">⚠️ Needs Attention</span>';
     myCustomers=masterData.filter(r=>String(r.salesmanCode)==String(user.userCode));populateFilters();renderTable();updateSurveyBadge();
     loadSurveys(user.userCode);
 }

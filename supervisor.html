@@ -214,7 +214,7 @@ async function loadFromAzure(userCode){
         const r=await fetch(url);if(!r.ok)return false;
         const data=await r.json();console.log('Azure API response keys:',Object.keys(data));if(data.error){console.error('Azure API error:',data.error);return false;}
         if(data.user)usersData=[{userCode:String(data.user['User Code']||''),userName:data.user['User Name']||'',role:(data.user.Role||data.user.role||'').trim()}];
-        if(data.salesmenData)salesmenData=data.salesmenData.map(r=>({salesmanCode:String(r['Salesman Code']||''),salesman:r['Salesman']||'',assignedSUP:String(r['Assigned SUP']||''),routeCode:String(r['Route Code']||''),tgt:toNum(r['TGT']),actCY:toNum(r['ACT-CY']),pctTgt:toNum(r['%TGT'])}));
+        if(data.salesmenData)salesmenData=data.salesmenData.map(r=>({salesmanCode:String(r['Salesman Code']||''),salesman:r['Salesman']||'',assignedSUP:String(r['Assigned SUP']||''),routeCode:String(r['Route Code']||''),tgt:toNum(r['TGT']),actCY:toNum(r['ACT-CY']),pctTgt:toNum(r['%TGT'])*100}));
         if(data.masterData)masterData=data.masterData.map(r=>({supervisorCode:String(r['Supervisor Code']||''),salesmanCode:String(r['Salesman Code']||''),branchManager:r['Branch Manager']||'',routeCode:String(r['Route Code']||''),customerCode:String(r['Customer Code']||''),customer:r['Customer']||'',sector:r['Sector']||'',cls:r['Class']||'',region:r['Region']||'',branch:r['Branch']||'',brand:r['Brand']||'',productGroup:r['Product Group']||'',subBrand:r['Sub Brand']||'',product:r['Product']||'',date:String(r['Date']||'').substring(0,10),l3s:toNum(r['L3S']),l6s:toNum(r['L6S']),achCYP:toNum(r['ACH CY (P)']),achLYP:toNum(r['ACH LY (P)']),actCY:toNum(r['ACT-CY']),actLY:toNum(r['ACT-LY'])}));
         console.log('Azure API: loaded',salesmenData.length,'salesmen,',masterData.length,'master rows');if(salesmenData.length)console.log('Sample salesman:',JSON.stringify(salesmenData[0]));if(masterData.length)console.log('Sample master:',JSON.stringify(masterData[0]));
         return true;
@@ -245,21 +245,22 @@ function renderSalesmenTable(){
     let html='',tTgt=0,tAct=0;
     sorted.forEach(s=>{
         const rem=s.tgt-s.actCY;const pct=s.pctTgt;
-        const cls=pct>=100?'pct-high':pct>=85?'pct-mid':'pct-low';
+        const cls=pct>=0?'pct-high':'pct-low';
+        const achPct=s.tgt?(s.actCY/s.tgt*100):0;
         tTgt+=s.tgt;tAct+=s.actCY;
         html+=`<tr>
             <td>${sanitize(s.salesmanCode)}</td><td style="font-weight:600;color:#333">${sanitize(s.salesman)}</td><td>${sanitize(s.routeCode)}</td>
             <td>${s.tgt.toLocaleString()}</td><td class="sales-val">${s.actCY.toLocaleString()}</td>
-            <td><span class="pct-badge ${cls}">${pct.toFixed(1)}%</span></td>
+            <td><span class="pct-badge ${cls}">${(pct>=0?'+':'')+pct.toFixed(1)}%</span></td>
             <td>${rem>0?rem.toLocaleString():'—'}</td>
-            <td><div class="mini-progress"><div class="mini-progress-fill" style="width:${Math.min(pct,100)}%"></div></div></td>
+            <td><div class="mini-progress"><div class="mini-progress-fill" style="width:${Math.min(achPct,100)}%"></div></div></td>
         </tr>`;
     });
     tbody.innerHTML=html;
-    const oPct=tTgt?((tAct/tTgt)*100):0;
+    const oPct=tTgt?((tAct-tTgt)/tTgt*100):0;
     document.getElementById('smTotalTgt').textContent=tTgt.toLocaleString();
     document.getElementById('smTotalAct').textContent=tAct.toLocaleString();
-    document.getElementById('smTotalPct').textContent=oPct.toFixed(1)+'%';
+    document.getElementById('smTotalPct').textContent=(oPct>=0?'+':'')+oPct.toFixed(1)+'%';
     document.getElementById('smTotalRem').textContent=(tTgt-tAct>0?(tTgt-tAct).toLocaleString():'—');
     // Update arrows on salesmen table header
     document.querySelectorAll('th.sortable[data-table="sm"]').forEach(th=>{th.classList.remove('sort-asc','sort-desc');if(th.dataset.sort===smSortField)th.classList.add('sort-'+smSortDir);});
