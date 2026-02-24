@@ -149,9 +149,9 @@
                     <div class="toolbar-group"><label>Class:</label><select id="filtClass"><option value="">All</option></select></div>
                 </div>
                 <table class="data-table" id="custTable">
-                    <thead><tr><th style="width:30px"></th><th class="sortable" data-sort="code" data-table="cust">Code</th><th class="sortable" data-sort="customer" data-table="cust">Customer</th><th class="sortable" data-sort="salesman" data-table="cust">Salesman</th><th class="sortable" data-sort="routeCode" data-table="cust">Route</th><th class="sortable" data-sort="sector" data-table="cust">Sector</th><th class="sortable" data-sort="cls" data-table="cust">Class</th><th class="sortable" data-sort="totalL3S" data-table="cust">L3S</th><th class="sortable" data-sort="totalL6S" data-table="cust">L6S</th><th class="sortable" data-sort="totalCY" data-table="cust">ACT-CY</th><th class="sortable" data-sort="totalLY" data-table="cust">ACT-LY</th><th class="sortable" data-sort="varPct" data-table="cust">%YoY Growth</th></tr></thead>
+                    <thead><tr><th style="width:30px"></th><th class="sortable" data-sort="code" data-table="cust">Code</th><th class="sortable" data-sort="customer" data-table="cust">Customer</th><th class="sortable" data-sort="salesman" data-table="cust">Salesman</th><th class="sortable" data-sort="routeCode" data-table="cust">Route</th><th class="sortable" data-sort="sector" data-table="cust">Sector</th><th class="sortable" data-sort="cls" data-table="cust">Class</th><th class="sortable" data-sort="totalCY" data-table="cust">ACT-CY</th><th class="sortable" data-sort="totalLY" data-table="cust">ACT-LY</th><th class="sortable" data-sort="varPct" data-table="cust">%YoY Growth</th></tr></thead>
                     <tbody id="custTableBody"><tr><td colspan="12" class="no-data">Loading…</td></tr></tbody>
-                    <tfoot><tr class="total-row"><td colspan="5">Total</td><td class="sales-val" id="custTotL3S">0</td><td class="sales-val" id="custTotL6S">0</td><td class="sales-val" id="custTotCY">0</td><td class="sales-val" id="custTotLY">0</td><td></td></tr></tfoot>
+                    <tfoot><tr class="total-row"><td colspan="7">Total</td><td class="sales-val" id="custTotCY">0</td><td class="sales-val" id="custTotLY">0</td><td></td></tr></tfoot>
                 </table>
             </div>
         </div>
@@ -171,7 +171,7 @@ function applyApiData(data){
     if(data.salesmenData)salesmenData=data.salesmenData.map(r=>({salesmanCode:String(r['Salesman Code']||''),salesman:r['Salesman']||'',assignedSUP:String(r['Assigned SUP']||''),routeCode:String(r['Route Code']||''),tgt:toNum(r['TGT']),actCY:toNum(r['ACT-CY']),pctTgt:toNum(r['%TGT'])*100}));
     if(data.supData)supData=data.supData.map(r=>({supervisorCode:String(r['Supervisor Code']||''),supervisor:r['Supervisor']||'',routeCode:String(r['Route Code']||''),assignedBSM:String(r['AssignedBSM']||''),tgt:toNum(r['TGT']),actCY:toNum(r['ACT-CY']),pctTgt:toNum(r['%TGT'])*100}));
     if(data.bsmData)bsmData=data.bsmData.map(r=>({bsmCode:String(r['BSM Code']||''),branchManager:r['Branch Manager']||'',sector:r['Sector']||'',branch:r['Branch']||'',tgt:toNum(r['TGT']),actCY:toNum(r['ACT-CY']),pctTgt:toNum(r['%TGT'])*100}));
-    if(data.masterData)masterData=data.masterData.map(r=>({supervisorCode:String(r['Supervisor Code']||''),salesmanCode:String(r['Salesman Code']||''),branchManager:r['Branch Manager']||'',routeCode:String(r['Route Code']||''),customerCode:String(r['Customer Code']||''),customer:r['Customer']||'',sector:r['Sector']||'',cls:r['Class']||'',region:r['Region']||'',branch:r['Branch']||'',brand:r['Brand']||'',productGroup:r['Product Group']||'',subBrand:r['Sub Brand']||'',product:r['Product']||'',date:String(r['Date']||'').substring(0,10),l3s:toNum(r['L3S']),l6s:toNum(r['L6S']),achCYP:toNum(r['ACH CY (P)']),achLYP:toNum(r['ACH LY (P)']),actCY:toNum(r['ACT-CY']),actLY:toNum(r['ACT-LY'])}));
+    if(data.masterData)masterData=data.masterData.map(r=>({supervisorCode:String(r['Supervisor Code']||''),salesmanCode:String(r['Salesman Code']||''),branchManager:r['Branch Manager']||'',routeCode:String(r['Route Code']||''),customerCode:String(r['Customer Code']||''),customer:r['Customer']||'',sector:r['Sector']||'',cls:r['Class']||'',region:r['Region']||'',branch:r['Branch']||'',brand:r['Brand']||'',productGroup:r['Product Group']||'',subBrand:r['Sub Brand']||'',product:r['Product']||'',date:String(r['Date']||'').substring(0,10),achCYP:toNum(r['ACH CY (P)']),achLYP:toNum(r['ACH LY (P)']),actCY:toNum(r['ACT-CY']),actLY:toNum(r['ACT-LY'])}));
     if(data.customerSummary)serverCustomerSummary=data.customerSummary;
     if(data.masterDataTotal)console.log('Server has',data.masterDataTotal,'master rows (not transferred)');
     return true;
@@ -261,41 +261,26 @@ function renderSMTable(){
 
 /* ══ TAB 3: Customer Summary (click to detail) ══ */
 function getCustomerSummaries(){
-    const smLookup={};mySalesmen.forEach(s=>{smLookup[String(s.salesmanCode)]=s.salesman;});
-    const q=document.getElementById('custSearch').value.toLowerCase();
-    const fSM=document.getElementById('filtSM').value;
-    const fCC='';
-    const fC='';
-    const fR='';
+    const q=document.getElementById('custSearch')?document.getElementById('custSearch').value.toLowerCase():'';
+    const fSM=document.getElementById('filtSM')?document.getElementById('filtSM').value:(document.getElementById('filtSalesman')?document.getElementById('filtSalesman').value:'');
     const fSec=document.getElementById('filtSector')?document.getElementById('filtSector').value:'';
     const fCls=document.getElementById('filtClass')?document.getElementById('filtClass').value:'';
     let summaries=[];
     if(serverCustomerSummary&&serverCustomerSummary.length){
-        const smLookup={};(typeof mySalesmen!=='undefined'?mySalesmen:[]).forEach(s=>{smLookup[String(s.salesmanCode)]=s.salesman;});
         summaries=serverCustomerSummary.map(c=>({
-            code:String(c['Customer Code']||c.customerCode||''),name:c['Customer']||c.customer||'',
-            salesman:smLookup[String(c['Salesman Code']||c.salesmanCode||'')]||c['Salesman']||c.salesman||String(c['Salesman Code']||c.salesmanCode||''),
-            salesmanCode:String(c['Salesman Code']||c.salesmanCode||''),
-            routeCode:String(c['Route Code']||c.routeCode||''),
-            sector:c['Sector']||c.sector||'',cls:c['Class']||c.cls||'',
-            totalCY:c['TotalCY']||c.totalCY||0,totalLY:c['TotalLY']||c.totalLY||0,
-            varPct:c['VarPct']||c.varPct||0,rows:[]
+            code:String(c['Customer Code']||'').trim(),
+            name:c['Customer']||'',
+            salesman:c['Salesman']||String(c['Salesman Code']||''),
+            salesmanCode:String(c['Salesman Code']||'').trim(),
+            routeCode:String(c['Route Code']||'').trim(),
+            sector:c['Sector']||'',
+            cls:c['Class']||'',
+            totalCY:+(c['TotalCY']||0),
+            totalLY:+(c['TotalLY']||0),
+            varPct:+(c['VarPct']||0)
         }));
-
-    } else if(myMasterData.length){
-        const map={};
-        myMasterData.forEach(r=>{
-            const key=r.customerCode;
-            if(!map[key]){const sm=mySalesmen.find(s=>String(s.salesmanCode)==String(r.salesmanCode));map[key]={code:key,name:r.customer,salesman:sm?sm.salesman:String(r.salesmanCode),routeCode:r.routeCode,salesmanCode:r.salesmanCode,sector:r.sector||'',cls:r.cls||'',totalCY:0,totalLY:0,rows:[]};}
-            map[key].totalCY+=(+(r.actCY)||0);map[key].totalLY+=(+(r.actLY)||0);map[key].rows.push(r);
-        });
-        summaries=Object.values(map);
-        summaries.forEach(c=>{c.varPct=c.totalLY?((c.totalCY-c.totalLY)/c.totalLY*100):0;});
     }
-    if(fSM)summaries=summaries.filter(c=>String(c.salesmanCode)===fSM);
-    if(fCC)summaries=summaries.filter(c=>String(c.code)===fCC);
-    if(fC)summaries=summaries.filter(c=>c.name===fC);
-    if(fR)summaries=summaries.filter(c=>String(c.routeCode)===fR);
+    if(fSM)summaries=summaries.filter(c=>c.salesmanCode===fSM);
     if(fSec)summaries=summaries.filter(c=>c.sector===fSec);
     if(fCls)summaries=summaries.filter(c=>c.cls===fCls);
     if(q)summaries=summaries.filter(c=>[c.code,c.name,c.salesman,c.routeCode,c.sector,c.cls].some(v=>String(v).toLowerCase().includes(q)));
@@ -320,8 +305,8 @@ async function openCustomerDetail(code){
                 customer:r['Customer']||'',sector:r['Sector']||'',cls:r['Class']||'',
                 brand:r['Brand']||'',productGroup:r['Product Group']||'',subBrand:r['Sub Brand']||'',
                 product:r['Product']||'',date:String(r['Date']||'').substring(0,10),
-                l3s:+(r['L3S'])||0,l6s:+(r['L6S'])||0,achCYP:+(r['ACH CY (P)'])||0,
-                achLYP:+(r['ACH LY (P)'])||0,actCY:+(r['ACT-CY'])||0,actLY:+(r['ACT-LY'])||0
+                achCYP:+(r['ACH CY (P)'])||0,achLYP:+(r['ACH LY (P)'])||0,
+                actCY:+(r['ACT-CY'])||0,actLY:+(r['ACT-LY'])||0
             }));
             sessionStorage.setItem('customerDetailInfo',JSON.stringify({
                 customerCode:cust.code,customerName:cust.name,salesman:cust.salesman,
@@ -378,10 +363,11 @@ function populateFilters(){
     const spvUniq=[...new Map(mySupervisors.map(s=>[s.supervisorCode,s])).values()];
     fill('smFiltSPV',spvUniq.map(s=>[String(s.supervisorCode),`${s.supervisor} (${s.supervisorCode})`]),'Supervisors');
     fill('filtSM',mySalesmen.map(s=>[String(s.salesmanCode),`${s.salesman} (${s.salesmanCode})`]),'Salesmen');
+    fill('filtSalesman',mySalesmen.map(s=>[String(s.salesmanCode),`${s.salesman} (${s.salesmanCode})`]),'Salesmen');
     fill('smFiltRoute',[...new Set(mySalesmen.map(s=>String(s.routeCode)))].sort((a,b)=>Number(a)-Number(b)).map(v=>[v,v]),'Routes');
-    const src=(serverCustomerSummary||[]).map(c=>({customerCode:String(c['Customer Code']||c.customerCode||''),customer:c['Customer']||c.customer||'',routeCode:String(c['Route Code']||c.routeCode||''),sector:c['Sector']||c.sector||'',cls:c['Class']||c.cls||''}));
-    fill('filtSector',[...new Set(src.map(r=>(r.sector||'')).filter(v=>v))].sort().map(v=>[v,v]),'Sectors');
-    fill('filtClass',[...new Set(src.map(r=>(r.cls||'')).filter(v=>v))].sort().map(v=>[v,v]),'Classes');
+    const src=serverCustomerSummary||[];
+    fill('filtSector',[...new Set(src.map(r=>(r['Sector']||'').trim()).filter(v=>v))].sort().map(v=>[v,v]),'Sectors');
+    fill('filtClass',[...new Set(src.map(r=>(r['Class']||'').trim()).filter(v=>v))].sort().map(v=>[v,v]),'Classes');
 }
 
 function showDashboard(user){

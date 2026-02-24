@@ -213,7 +213,7 @@ function toNum(v){const n=Number(v);return isNaN(n)?0:n;}
 function applyApiData(data){
     if(data.user)usersData=[{userCode:String(data.user['User Code']||''),userName:data.user['User Name']||'',role:(data.user.Role||data.user.role||'').trim()}];
     if(data.salesmenData)salesmenData=data.salesmenData.map(r=>({salesmanCode:String(r['Salesman Code']||''),salesman:r['Salesman']||'',assignedSUP:String(r['Assigned SUP']||''),routeCode:String(r['Route Code']||''),tgt:toNum(r['TGT']),actCY:toNum(r['ACT-CY']),pctTgt:toNum(r['%TGT'])*100}));
-    if(data.masterData)masterData=data.masterData.map(r=>({supervisorCode:String(r['Supervisor Code']||''),salesmanCode:String(r['Salesman Code']||''),branchManager:r['Branch Manager']||'',routeCode:String(r['Route Code']||''),customerCode:String(r['Customer Code']||''),customer:r['Customer']||'',sector:r['Sector']||'',cls:r['Class']||'',region:r['Region']||'',branch:r['Branch']||'',brand:r['Brand']||'',productGroup:r['Product Group']||'',subBrand:r['Sub Brand']||'',product:r['Product']||'',date:String(r['Date']||'').substring(0,10),l3s:toNum(r['L3S']),l6s:toNum(r['L6S']),achCYP:toNum(r['ACH CY (P)']),achLYP:toNum(r['ACH LY (P)']),actCY:toNum(r['ACT-CY']),actLY:toNum(r['ACT-LY'])}));
+    if(data.masterData)masterData=data.masterData.map(r=>({supervisorCode:String(r['Supervisor Code']||''),salesmanCode:String(r['Salesman Code']||''),branchManager:r['Branch Manager']||'',routeCode:String(r['Route Code']||''),customerCode:String(r['Customer Code']||''),customer:r['Customer']||'',sector:r['Sector']||'',cls:r['Class']||'',region:r['Region']||'',branch:r['Branch']||'',brand:r['Brand']||'',productGroup:r['Product Group']||'',subBrand:r['Sub Brand']||'',product:r['Product']||'',date:String(r['Date']||'').substring(0,10),achCYP:toNum(r['ACH CY (P)']),achLYP:toNum(r['ACH LY (P)']),actCY:toNum(r['ACT-CY']),actLY:toNum(r['ACT-LY'])}));
     if(data.customerSummary)serverCustomerSummary=data.customerSummary;
     if(data.masterDataTotal)console.log('Server has',data.masterDataTotal,'master rows (not transferred)');
     return true;
@@ -287,46 +287,29 @@ let custPage=1;const CUST_PAGE_SIZE=50;
 let smSortField='',smSortDir='asc';
 
 function getCustomerSummaries(){
-    const q=document.getElementById('custSearch').value.toLowerCase();
-    const fS=document.getElementById('filtSalesman').value;
-    const fCC='';
-    const fC='';
-    const fR='';
+    const q=document.getElementById('custSearch')?document.getElementById('custSearch').value.toLowerCase():'';
+    const fSM=document.getElementById('filtSM')?document.getElementById('filtSM').value:(document.getElementById('filtSalesman')?document.getElementById('filtSalesman').value:'');
     const fSec=document.getElementById('filtSector')?document.getElementById('filtSector').value:'';
     const fCls=document.getElementById('filtClass')?document.getElementById('filtClass').value:'';
-    // Build summaries from server data
     let summaries=[];
     if(serverCustomerSummary&&serverCustomerSummary.length){
-        const smLookup={};(typeof mySalesmen!=='undefined'?mySalesmen:[]).forEach(s=>{smLookup[String(s.salesmanCode)]=s.salesman;});
         summaries=serverCustomerSummary.map(c=>({
-            code:String(c['Customer Code']||c.customerCode||''),name:c['Customer']||c.customer||'',
-            salesman:smLookup[String(c['Salesman Code']||c.salesmanCode||'')]||c['Salesman']||c.salesman||String(c['Salesman Code']||c.salesmanCode||''),
-            salesmanCode:String(c['Salesman Code']||c.salesmanCode||''),
-            routeCode:String(c['Route Code']||c.routeCode||''),
-            sector:c['Sector']||c.sector||'',cls:c['Class']||c.cls||'',
-            totalCY:c['TotalCY']||c.totalCY||0,totalLY:c['TotalLY']||c.totalLY||0,
-            varPct:c['VarPct']||c.varPct||0,rows:[]
+            code:String(c['Customer Code']||'').trim(),
+            name:c['Customer']||'',
+            salesman:c['Salesman']||String(c['Salesman Code']||''),
+            salesmanCode:String(c['Salesman Code']||'').trim(),
+            routeCode:String(c['Route Code']||'').trim(),
+            sector:c['Sector']||'',
+            cls:c['Class']||'',
+            totalCY:+(c['TotalCY']||0),
+            totalLY:+(c['TotalLY']||0),
+            varPct:+(c['VarPct']||0)
         }));
-
-    } else if(myMasterData.length){
-        const map={};
-        myMasterData.forEach(r=>{
-            const key=r.customerCode;
-            if(!map[key]){const sm=mySalesmen.find(s=>String(s.salesmanCode)==String(r.salesmanCode));map[key]={code:key,name:r.customer,salesman:sm?sm.salesman:String(r.salesmanCode),routeCode:r.routeCode,salesmanCode:r.salesmanCode,sector:r.sector||'',cls:r.cls||'',totalCY:0,totalLY:0,rows:[]};}
-            map[key].totalCY+=(+(r.actCY)||0);map[key].totalLY+=(+(r.actLY)||0);map[key].rows.push(r);
-        });
-        summaries=Object.values(map);
-        summaries.forEach(c=>{c.varPct=c.totalLY?((c.totalCY-c.totalLY)/c.totalLY*100):0;});
     }
-    // Apply filters
-    if(fS)summaries=summaries.filter(c=>String(c.salesmanCode)===fS);
-    if(fCC)summaries=summaries.filter(c=>String(c.code)===fCC);
-    if(fC)summaries=summaries.filter(c=>c.name===fC);
-    if(fR)summaries=summaries.filter(c=>String(c.routeCode)===fR);
+    if(fSM)summaries=summaries.filter(c=>c.salesmanCode===fSM);
     if(fSec)summaries=summaries.filter(c=>c.sector===fSec);
     if(fCls)summaries=summaries.filter(c=>c.cls===fCls);
     if(q)summaries=summaries.filter(c=>[c.code,c.name,c.salesman,c.routeCode,c.sector,c.cls].some(v=>String(v).toLowerCase().includes(q)));
-    // Sort
     if(custSortField){
         const m=custSortDir==='desc'?-1:1;
         summaries.sort((a,b)=>{let va=a[custSortField],vb=b[custSortField];if(custSortField==='customer'){va=a.name;vb=b.name;}if(typeof va==='number')return(va-vb)*m;return String(va||'').localeCompare(String(vb||''))*m;});
@@ -337,7 +320,6 @@ function getCustomerSummaries(){
 async function openCustomerDetail(code){
     const summaries=getCustomerSummaries();
     const cust=summaries.find(c=>c.code===code);if(!cust)return;
-    // Fetch detail rows from server for this one customer
     try{
         const url=AZURE_API_URL+'?action=customerDetail&code='+encodeURIComponent(currentUser.userCode)+'&customer='+encodeURIComponent(code);
         const r=await fetch(url);
@@ -349,8 +331,8 @@ async function openCustomerDetail(code){
                 customer:r['Customer']||'',sector:r['Sector']||'',cls:r['Class']||'',
                 brand:r['Brand']||'',productGroup:r['Product Group']||'',subBrand:r['Sub Brand']||'',
                 product:r['Product']||'',date:String(r['Date']||'').substring(0,10),
-                l3s:+(r['L3S'])||0,l6s:+(r['L6S'])||0,achCYP:+(r['ACH CY (P)'])||0,
-                achLYP:+(r['ACH LY (P)'])||0,actCY:+(r['ACT-CY'])||0,actLY:+(r['ACT-LY'])||0
+                achCYP:+(r['ACH CY (P)'])||0,achLYP:+(r['ACH LY (P)'])||0,
+                actCY:+(r['ACT-CY'])||0,actLY:+(r['ACT-LY'])||0
             }));
             sessionStorage.setItem('customerDetailInfo',JSON.stringify({
                 customerCode:cust.code,customerName:cust.name,salesman:cust.salesman,
