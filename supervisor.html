@@ -173,9 +173,9 @@
                     <div class="toolbar-group"><label>Class:</label><select id="filtClass"><option value="">All</option></select></div>
                 </div>
                 <table class="data-table" id="custTable">
-                    <thead><tr><th style="width:30px"></th><th class="sortable" data-sort="code">Code</th><th class="sortable" data-sort="customer">Customer</th><th class="sortable" data-sort="salesman">Salesman</th><th class="sortable" data-sort="routeCode">Route</th><th class="sortable" data-sort="sector">Sector</th><th class="sortable" data-sort="cls">Class</th><th class="sortable" data-sort="totalL3S">L3S</th><th class="sortable" data-sort="totalL6S">L6S</th><th class="sortable" data-sort="totalCY">ACT-CY</th><th class="sortable" data-sort="totalLY">ACT-LY</th><th class="sortable" data-sort="varPct">%YoY Growth</th></tr></thead>
+                    <thead><tr><th style="width:30px"></th><th class="sortable" data-sort="code">Code</th><th class="sortable" data-sort="customer">Customer</th><th class="sortable" data-sort="salesman">Salesman</th><th class="sortable" data-sort="routeCode">Route</th><th class="sortable" data-sort="sector">Sector</th><th class="sortable" data-sort="cls">Class</th><th class="sortable" data-sort="totalCY">ACT-CY</th><th class="sortable" data-sort="totalLY">ACT-LY</th><th class="sortable" data-sort="varPct">%YoY Growth</th></tr></thead>
                     <tbody id="custTableBody"><tr><td colspan="8" class="no-data">Loading…</td></tr></tbody>
-                    <tfoot><tr class="total-row"><td colspan="7">Total</td><td class="sales-val"><span id="custTotalL3S">0</span></td><td class="sales-val"><span id="custTotalL6S">0</span></td><td class="sales-val"><span id="custTotalCY">0</span></td><td class="sales-val"><span id="custTotalLY">0</span></td><td></td></tr></tfoot>
+                    <tfoot><tr class="total-row"><td colspan="5">Total</td><td class="sales-val"><span id="custTotalCY">0</span></td><td class="sales-val"><span id="custTotalLY">0</span></td><td></td></tr></tfoot>
                 </table>
             </div>
         </div>
@@ -287,7 +287,6 @@ let custPage=1;const CUST_PAGE_SIZE=50;
 let smSortField='',smSortDir='asc';
 
 function getCustomerSummaries(){
-    const smLookup={};mySalesmen.forEach(s=>{smLookup[String(s.salesmanCode)]=s.salesman;});
     const q=document.getElementById('custSearch').value.toLowerCase();
     const fS=document.getElementById('filtSalesman').value;
     const fCC='';
@@ -298,25 +297,23 @@ function getCustomerSummaries(){
     // Build summaries from server data
     let summaries=[];
     if(serverCustomerSummary&&serverCustomerSummary.length){
+        const smLookup={};(typeof mySalesmen!=='undefined'?mySalesmen:[]).forEach(s=>{smLookup[String(s.salesmanCode)]=s.salesman;});
         summaries=serverCustomerSummary.map(c=>({
             code:String(c['Customer Code']||c.customerCode||''),name:c['Customer']||c.customer||'',
-            salesman:smLookup[String(c['Salesman Code']||c.salesmanCode||'')]||String(c['Salesman Code']||c.salesmanCode||''),
+            salesman:smLookup[String(c['Salesman Code']||c.salesmanCode||'')]||c['Salesman']||c.salesman||String(c['Salesman Code']||c.salesmanCode||''),
             salesmanCode:String(c['Salesman Code']||c.salesmanCode||''),
             routeCode:String(c['Route Code']||c.routeCode||''),
             sector:c['Sector']||c.sector||'',cls:c['Class']||c.cls||'',
-            totalL3S:c['TotalL3S']||c.totalL3S||0,totalL6S:c['TotalL6S']||c.totalL6S||0,
             totalCY:c['TotalCY']||c.totalCY||0,totalLY:c['TotalLY']||c.totalLY||0,
             varPct:c['VarPct']||c.varPct||0,rows:[]
         }));
-        // Enrich salesman names from salesmenData
-        const smLookup={};(typeof mySalesmen!=='undefined'?mySalesmen:salesmenData).forEach(s=>{smLookup[String(s.salesmanCode)]=s.salesman;});
-        summaries.forEach(s=>{if(smLookup[s.salesmanCode])s.salesman=smLookup[s.salesmanCode];});
+
     } else if(myMasterData.length){
         const map={};
         myMasterData.forEach(r=>{
             const key=r.customerCode;
-            if(!map[key]){const sm=mySalesmen.find(s=>String(s.salesmanCode)==String(r.salesmanCode));map[key]={code:key,name:r.customer,salesman:sm?sm.salesman:String(r.salesmanCode),routeCode:r.routeCode,salesmanCode:r.salesmanCode,sector:r.sector||'',cls:r.cls||'',totalCY:0,totalLY:0,totalL3S:0,totalL6S:0,rows:[]};}
-            map[key].totalCY+=(+(r.actCY)||0);map[key].totalLY+=(+(r.actLY)||0);map[key].totalL3S+=(+(r.l3s)||0);map[key].totalL6S+=(+(r.l6s)||0);map[key].rows.push(r);
+            if(!map[key]){const sm=mySalesmen.find(s=>String(s.salesmanCode)==String(r.salesmanCode));map[key]={code:key,name:r.customer,salesman:sm?sm.salesman:String(r.salesmanCode),routeCode:r.routeCode,salesmanCode:r.salesmanCode,sector:r.sector||'',cls:r.cls||'',totalCY:0,totalLY:0,rows:[]};}
+            map[key].totalCY+=(+(r.actCY)||0);map[key].totalLY+=(+(r.actLY)||0);map[key].rows.push(r);
         });
         summaries=Object.values(map);
         summaries.forEach(c=>{c.varPct=c.totalLY?((c.totalCY-c.totalLY)/c.totalLY*100):0;});
@@ -372,8 +369,8 @@ function renderCustTable(){
     const totalPages=Math.ceil(total/CUST_PAGE_SIZE);
     if(custPage>totalPages)custPage=totalPages||1;
     if(!total){tbody.innerHTML='<tr><td colspan="12" class="no-data">No data found</td></tr>';document.getElementById('custTotalCY').textContent='0';document.getElementById('custTotalLY').textContent='0';updateCustPagination(0,0);return;}
-    let tCY=0,tLY=0,tL3S=0,tL6S=0;
-    allSummaries.forEach(c=>{tCY+=c.totalCY;tLY+=c.totalLY;tL3S+=c.totalL3S;tL6S+=c.totalL6S;});
+    let tCY=0,tLY=0;
+    allSummaries.forEach(c=>{tCY+=c.totalCY;tLY+=c.totalLY;});
     const start=(custPage-1)*CUST_PAGE_SIZE;
     const pageData=allSummaries.slice(start,start+CUST_PAGE_SIZE);
     let html='';
@@ -384,12 +381,9 @@ function renderCustTable(){
             <td>🔗</td><td style="font-weight:600">${sanitize(c.code)}</td><td style="font-weight:600;color:#333">${sanitize(c.name)}</td>
             <td>${sanitize(c.salesman)}</td><td>${sanitize(c.routeCode)}</td>
             <td>${sanitize(c.sector)}</td><td>${sanitize(c.cls)}</td>
-            <td>${c.totalL3S.toLocaleString()}</td><td>${c.totalL6S.toLocaleString()}</td>
             <td class="sales-val">${c.totalCY.toLocaleString()}</td><td>${c.totalLY.toLocaleString()}</td><td><span class="${varCls}">${varStr}</span></td></tr>`;
     });
     tbody.innerHTML=html;
-    document.getElementById('custTotalL3S').textContent=tL3S.toLocaleString();
-    document.getElementById('custTotalL6S').textContent=tL6S.toLocaleString();
     document.getElementById('custTotalCY').textContent=tCY.toLocaleString();document.getElementById('custTotalLY').textContent=tLY.toLocaleString();
     updateSortArrows('custTable',custSortField,custSortDir);
     updateCustPagination(total,totalPages);
