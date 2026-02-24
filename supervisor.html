@@ -287,6 +287,7 @@ let custPage=1;const CUST_PAGE_SIZE=50;
 let smSortField='',smSortDir='asc';
 
 function getCustomerSummaries(){
+    const smLookup={};mySalesmen.forEach(s=>{smLookup[String(s.salesmanCode)]=s.salesman;});
     const q=document.getElementById('custSearch').value.toLowerCase();
     const fS=document.getElementById('filtSalesman').value;
     const fCC='';
@@ -298,11 +299,18 @@ function getCustomerSummaries(){
     let summaries=[];
     if(serverCustomerSummary&&serverCustomerSummary.length){
         summaries=serverCustomerSummary.map(c=>({
-            code:String(c.customerCode||''),name:c.customer||'',salesman:c.salesman||'',salesmanCode:String(c.salesmanCode||''),
-            routeCode:String(c.routeCode||''),sector:c.sector||'',cls:c.cls||'',
-            totalL3S:c.totalL3S||0,totalL6S:c.totalL6S||0,totalCY:c.totalCY||0,totalLY:c.totalLY||0,
-            varPct:c.varPct||0,rows:[]
+            code:String(c['Customer Code']||c.customerCode||''),name:c['Customer']||c.customer||'',
+            salesman:smLookup[String(c['Salesman Code']||c.salesmanCode||'')]||String(c['Salesman Code']||c.salesmanCode||''),
+            salesmanCode:String(c['Salesman Code']||c.salesmanCode||''),
+            routeCode:String(c['Route Code']||c.routeCode||''),
+            sector:c['Sector']||c.sector||'',cls:c['Class']||c.cls||'',
+            totalL3S:c['TotalL3S']||c.totalL3S||0,totalL6S:c['TotalL6S']||c.totalL6S||0,
+            totalCY:c['TotalCY']||c.totalCY||0,totalLY:c['TotalLY']||c.totalLY||0,
+            varPct:c['VarPct']||c.varPct||0,rows:[]
         }));
+        // Enrich salesman names from salesmenData
+        const smLookup={};(typeof mySalesmen!=='undefined'?mySalesmen:salesmenData).forEach(s=>{smLookup[String(s.salesmanCode)]=s.salesman;});
+        summaries.forEach(s=>{if(smLookup[s.salesmanCode])s.salesman=smLookup[s.salesmanCode];});
     } else if(myMasterData.length){
         const map={};
         myMasterData.forEach(r=>{
@@ -406,7 +414,7 @@ function populateCustFilters(){
     fill('smFiltSalesman',smOpts,'Salesmen');
     fill('smFiltRoute',[...new Set(mySalesmen.map(s=>String(s.routeCode)))].sort((a,b)=>Number(a)-Number(b)).map(v=>[v,v]),'Routes');
     // Use serverCustomerSummary OR myMasterData for customer filters
-    const src=serverCustomerSummary&&serverCustomerSummary.length?serverCustomerSummary.map(c=>({customerCode:String(c.customerCode||''),customer:c.customer||'',routeCode:String(c.routeCode||''),sector:c.sector||'',cls:c.cls||''})):myMasterData;
+    const src=serverCustomerSummary&&serverCustomerSummary.length?serverCustomerSummary.map(c=>({customerCode:String(c['Customer Code']||c.customerCode||''),customer:c['Customer']||c.customer||'',routeCode:String(c['Route Code']||c.routeCode||''),sector:c['Sector']||c.sector||'',cls:c['Class']||c.cls||''})):myMasterData;
     const codeKey=serverCustomerSummary?'customerCode':'customerCode';
     const custKey=serverCustomerSummary?'customer':'customer';
     fill('filtCustCode',[...new Set(src.map(r=>String(r.customerCode||r[codeKey])))].sort().map(v=>[v,v]),'Codes');
@@ -554,7 +562,7 @@ function showDashboard(user){
     // Summary
     const tTgt=mySalesmen.reduce((a,s)=>a+s.tgt,0);
     const tAct=mySalesmen.reduce((a,s)=>a+s.actCY,0);
-    const uniqueCustomers=serverCustomerSummary&&serverCustomerSummary.length?serverCustomerSummary:[...new Set(myMasterData.map(r=>r.customerCode))];
+    const uniqueCustomers=serverCustomerSummary||[];
     document.getElementById('sumSalesmen').textContent=mySalesmen.length;
     document.getElementById('sumTarget').textContent=tTgt.toLocaleString();
     document.getElementById('sumActual').textContent=tAct.toLocaleString();
