@@ -143,11 +143,8 @@
             <div class="section-card">
                 <h3>🏪 All Customer Sales</h3>
                 <div class="toolbar">
-                    <input type="text" id="custSearch" placeholder="🔍 Search...">
+                    <input type="text" id="custSearch" placeholder="🔍 Search by name, code, salesman, sector, class..." oninput="clearTimeout(this._t);this._t=setTimeout(()=>{custPage=1;renderCustTable();},300)">
                     <div class="toolbar-group"><label>Salesman:</label><select id="filtSM"><option value="">All</option></select></div>
-                    <div class="toolbar-group"><label>Customer Code:</label><select id="filtCustCode"><option value="">All</option></select></div>
-                    <div class="toolbar-group"><label>Customer:</label><select id="filtCust"><option value="">All</option></select></div>
-                    <div class="toolbar-group"><label>Route:</label><select id="filtRoute"><option value="">All</option></select></div>
                     <div class="toolbar-group"><label>Sector:</label><select id="filtSector"><option value="">All</option></select></div>
                     <div class="toolbar-group"><label>Class:</label><select id="filtClass"><option value="">All</option></select></div>
                 </div>
@@ -207,6 +204,7 @@ function switchTab(t){
 
 /* ══ COLUMN SORT STATE ══ */
 let supSortField='',supSortDir='asc';
+let custPage=1;const CUST_PAGE_SIZE=50;
 let smSortField2='',smSortDir2='asc';
 let custSortField='',custSortDir='asc';
 
@@ -265,9 +263,9 @@ function renderSMTable(){
 function getCustomerSummaries(){
     const q=document.getElementById('custSearch').value.toLowerCase();
     const fSM=document.getElementById('filtSM').value;
-    const fCC=document.getElementById('filtCustCode')?document.getElementById('filtCustCode').value:'';
-    const fC=document.getElementById('filtCust').value;
-    const fR=document.getElementById('filtRoute')?document.getElementById('filtRoute').value:'';
+    const fCC='';
+    const fC='';
+    const fR='';
     const fSec=document.getElementById('filtSector')?document.getElementById('filtSector').value:'';
     const fCls=document.getElementById('filtClass')?document.getElementById('filtClass').value:'';
     let summaries=[];
@@ -330,12 +328,20 @@ async function openCustomerDetail(code){
 }
 
 function renderCustTable(){
-    const summaries=getCustomerSummaries();
+    const allSummaries=getCustomerSummaries();
     const tbody=document.getElementById('custTableBody');
-    if(!summaries.length){tbody.innerHTML='<tr><td colspan="10" class="no-data">No data found</td></tr>';document.getElementById('custTotCY').textContent='0';document.getElementById('custTotLY').textContent='0';return;}
-    let html='',tCY=0,tLY=0;
-    summaries.forEach(c=>{
-        tCY+=c.totalCY;tLY+=c.totalLY;
+    const total=allSummaries.length;
+    const totalPages=Math.ceil(total/CUST_PAGE_SIZE);
+    if(custPage>totalPages)custPage=totalPages||1;
+    if(!total){tbody.innerHTML='<tr><td colspan="12" class="no-data">No data found</td></tr>';document.getElementById('custTotCY').textContent='0';document.getElementById('custTotLY').textContent='0';updatePagination(0,0);return;}
+    // Totals from ALL filtered data
+    let tCY=0,tLY=0,tL3S=0,tL6S=0;
+    allSummaries.forEach(c=>{tCY+=c.totalCY;tLY+=c.totalLY;tL3S+=c.totalL3S;tL6S+=c.totalL6S;});
+    // Paginate
+    const start=(custPage-1)*CUST_PAGE_SIZE;
+    const pageData=allSummaries.slice(start,start+CUST_PAGE_SIZE);
+    let html='';
+    pageData.forEach(c=>{
         const varCls=c.varPct>=0?'var-positive':'var-negative';
         const varStr=(c.varPct>=0?'+':'')+c.varPct.toFixed(1)+'%';
         html+=`<tr class="cust-summary-row" onclick="openCustomerDetail('${sanitize(c.code)}')">
@@ -346,26 +352,33 @@ function renderCustTable(){
             <td class="sales-val">${c.totalCY.toLocaleString()}</td><td>${c.totalLY.toLocaleString()}</td><td><span class="${varCls}">${varStr}</span></td></tr>`;
     });
     tbody.innerHTML=html;
-    document.getElementById('custTotL3S').textContent=summaries.reduce((a,c)=>a+c.totalL3S,0).toLocaleString();
-    document.getElementById('custTotL6S').textContent=summaries.reduce((a,c)=>a+c.totalL6S,0).toLocaleString();
+    document.getElementById('custTotL3S').textContent=tL3S.toLocaleString();
+    document.getElementById('custTotL6S').textContent=tL6S.toLocaleString();
     document.getElementById('custTotCY').textContent=tCY.toLocaleString();document.getElementById('custTotLY').textContent=tLY.toLocaleString();
     document.querySelectorAll('th.sortable[data-table="cust"]').forEach(th=>{th.classList.remove('sort-asc','sort-desc');if(th.dataset.sort===custSortField)th.classList.add('sort-'+custSortDir);});
+    updatePagination(total,totalPages);
+}
+function updatePagination(total,totalPages){
+    let pg=document.getElementById('custPagination');
+    if(!pg){pg=document.createElement('div');pg.id='custPagination';pg.style.cssText='display:flex;align-items:center;justify-content:center;gap:12px;padding:15px;font-size:.9em;';
+    document.getElementById('custTable').parentNode.appendChild(pg);}
+    if(!total){pg.innerHTML='';return;}
+    pg.innerHTML=`<button onclick="custPage=1;renderCustTable()" ${custPage<=1?'disabled':''} style="padding:6px 12px;border:1px solid #ddd;border-radius:6px;background:#fff;cursor:pointer">«</button>`+
+    `<button onclick="custPage--;renderCustTable()" ${custPage<=1?'disabled':''} style="padding:6px 12px;border:1px solid #ddd;border-radius:6px;background:#fff;cursor:pointer">‹</button>`+
+    `<span style="font-weight:600">Page ${custPage} of ${totalPages}</span><span style="color:#888">(${total} customers)</span>`+
+    `<button onclick="custPage++;renderCustTable()" ${custPage>=totalPages?'disabled':''} style="padding:6px 12px;border:1px solid #ddd;border-radius:6px;background:#fff;cursor:pointer">›</button>`+
+    `<button onclick="custPage=${totalPages};renderCustTable()" ${custPage>=totalPages?'disabled':''} style="padding:6px 12px;border:1px solid #ddd;border-radius:6px;background:#fff;cursor:pointer">»</button>`;
 }
 
 function populateFilters(){
     const fill=(id,vals,lbl)=>{const el=document.getElementById(id);if(!el)return;el.innerHTML=`<option value="">All ${lbl}</option>`;vals.forEach(v=>{el.innerHTML+=`<option value="${sanitize(v[0])}">${sanitize(v[1])}</option>`;});};
     const spvUniq=[...new Map(mySupervisors.map(s=>[s.supervisorCode,s])).values()];
-    const spvOpts=spvUniq.map(s=>[String(s.supervisorCode),`${s.supervisor} (${s.supervisorCode})`]);
-    fill('smFiltSPV',spvOpts,'Supervisors');
+    fill('smFiltSPV',spvUniq.map(s=>[String(s.supervisorCode),`${s.supervisor} (${s.supervisorCode})`]),'Supervisors');
     fill('filtSM',mySalesmen.map(s=>[String(s.salesmanCode),`${s.salesman} (${s.salesmanCode})`]),'Salesmen');
     fill('smFiltRoute',[...new Set(mySalesmen.map(s=>String(s.routeCode)))].sort((a,b)=>Number(a)-Number(b)).map(v=>[v,v]),'Routes');
-    // Customer tab filters from server summary
-    const src=serverCustomerSummary&&serverCustomerSummary.length?serverCustomerSummary.map(c=>({customerCode:String(c.customerCode||''),customer:c.customer||'',routeCode:String(c.routeCode||''),sector:c.sector||'',cls:c.cls||''})):myMasterData;
-    fill('filtCustCode',[...new Set(src.map(r=>String(r.customerCode)))].sort().map(v=>[v,v]),'Codes');
-    fill('filtCust',[...new Set(src.map(r=>r.customer))].sort().map(v=>[v,v]),'Customers');
-    fill('filtRoute',[...new Set(src.map(r=>String(r.routeCode)))].sort((a,b)=>Number(a)-Number(b)).map(v=>[v,v]),'Routes');
-    fill('filtSector',[...new Set(src.map(r=>r.sector||'').filter(v=>v))].sort().map(v=>[v,v]),'Sectors');
-    fill('filtClass',[...new Set(src.map(r=>r.cls||'').filter(v=>v))].sort().map(v=>[v,v]),'Classes');
+    const src=serverCustomerSummary||[];
+    fill('filtSector',[...new Set(src.map(r=>(r.sector||'')).filter(v=>v))].sort().map(v=>[v,v]),'Sectors');
+    fill('filtClass',[...new Set(src.map(r=>(r.cls||'')).filter(v=>v))].sort().map(v=>[v,v]),'Classes');
 }
 
 function showDashboard(user){
@@ -397,12 +410,13 @@ function showDashboard(user){
     document.getElementById('sumPct').textContent=(growth>=0?'+':'')+growth.toFixed(1)+'%';
     document.getElementById('sumCust').textContent=serverCustomerSummary&&serverCustomerSummary.length?serverCustomerSummary.length:[...new Set(myMasterData.map(r=>r.customerCode))].length;
 
-    populateFilters();renderSPVTable();renderSMTable();renderCustTable();
+    populateFilters();renderSPVTable();renderSMTable();
+    // Customer table renders on first tab click (deferred for speed)
 }
 
 document.addEventListener('DOMContentLoaded',()=>{
-    ['custSearch','filtSM','filtCustCode','filtCust','filtRoute','filtSector','filtClass'].forEach(id=>{
-        const el=document.getElementById(id);if(el)el.addEventListener(el.tagName==='INPUT'?'input':'change',renderCustTable);
+    ['filtSM','filtSector','filtClass'].forEach(id=>{
+        const el=document.getElementById(id);if(el)el.addEventListener(el.tagName==='INPUT'?'input':'change',()=>{custPage=1;renderCustTable();});
     });
     document.getElementById('smFiltSPV').addEventListener('change',renderSMTable);
     if(document.getElementById('smFiltRoute'))document.getElementById('smFiltRoute').addEventListener('change',renderSMTable);
