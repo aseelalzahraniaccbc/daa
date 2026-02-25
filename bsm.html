@@ -175,6 +175,7 @@ function applyApiData(data){
     if(data.masterData)masterData=data.masterData.map(r=>({supervisorCode:String(r['Supervisor Code']||''),salesmanCode:String(r['Salesman Code']||''),branchManager:r['Branch Manager']||'',routeCode:String(r['Route Code']||''),customerCode:String(r['Customer Code']||''),customer:r['Customer']||'',sector:r['Sector']||'',cls:r['Class']||'',region:r['Region']||'',branch:r['Branch']||'',brand:r['Brand']||'',productGroup:r['Product Group']||'',subBrand:r['Sub Brand']||'',product:r['Product']||'',date:String(r['Date']||'').substring(0,10),achCYP:toNum(r['ACH CY (P)']),achLYP:toNum(r['ACH LY (P)']),actCY:toNum(r['ACT-CY']),actLY:toNum(r['ACT-LY'])}));
     if(data.customerSummary)serverCustomerSummary=data.customerSummary;
     if(data.dates)window._apiDates=data.dates;
+    if(data.dashSummary)window._dashSummary=data.dashSummary;
     if(data.masterDataTotal)console.log('Server has',data.masterDataTotal,'master rows (not transferred)');
     return true;
 }
@@ -410,16 +411,27 @@ function showDashboard(user){
     [...smFromSup,...smDirect].forEach(s=>{smMap[String(s.salesmanCode)]=s;});
     mySalesmen=Object.values(smMap);
 
-    // Summary from salesmenData (includes BSM direct routes)
-    const tT=mySalesmen.reduce((a,s)=>a+s.tgt,0);
-    const tA=mySalesmen.reduce((a,s)=>a+s.actCY,0);
-    const growth=tT?((tA-tT)/tT*100):0;
-    document.getElementById('sumSPV').textContent=spvCodes.length;
-    document.getElementById('sumSM').textContent=mySalesmen.length;
-    document.getElementById('sumTgt').textContent=tT.toLocaleString();
-    document.getElementById('sumAct').textContent=tA.toLocaleString();
-    document.getElementById('sumPct').textContent=(growth>=0?'+':'')+growth.toFixed(1)+'%';
-    document.getElementById('sumCust').textContent=serverCustomerSummary&&serverCustomerSummary.length?serverCustomerSummary.length:0;
+    // Summary from DB query (accurate totals including direct routes)
+    if(window._dashSummary){
+        const ds=window._dashSummary;
+        document.getElementById('sumSPV').textContent=ds['TotalSUP']||0;
+        document.getElementById('sumSM').textContent=ds['TotalSalesmen']||0;
+        document.getElementById('sumTgt').textContent=(+(ds['TotalTGT']||0)).toLocaleString();
+        document.getElementById('sumAct').textContent=(+(ds['TotalACT']||0)).toLocaleString();
+        const growth=+(ds['Growth']||0);
+        document.getElementById('sumPct').textContent=(growth>=0?'+':'')+growth.toFixed(1)+'%';
+        document.getElementById('sumCust').textContent=ds['TotalCustomers']||0;
+    } else {
+        const tT=mySalesmen.reduce((a,s)=>a+s.tgt,0);
+        const tA=mySalesmen.reduce((a,s)=>a+s.actCY,0);
+        const growth=tT?((tA-tT)/tT*100):0;
+        document.getElementById('sumSPV').textContent=spvCodes.length;
+        document.getElementById('sumSM').textContent=mySalesmen.length;
+        document.getElementById('sumTgt').textContent=tT.toLocaleString();
+        document.getElementById('sumAct').textContent=tA.toLocaleString();
+        document.getElementById('sumPct').textContent=(growth>=0?'+':'')+growth.toFixed(1)+'%';
+        document.getElementById('sumCust').textContent=serverCustomerSummary&&serverCustomerSummary.length?serverCustomerSummary.length:0;
+    }
 
     // Load dates for filter
     if(window._apiDates&&window._apiDates.length){
