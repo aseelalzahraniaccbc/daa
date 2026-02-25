@@ -235,21 +235,21 @@ function renderSPVTable(){
         const act=+(s['ACT-CY']||0);
         const pct=+(s['PctTGT']||0);
         const achPct=tgt?(act/tgt*100):0;
-        const cls=achPct>=100?'pct-high':achPct>=85?'pct-mid':'pct-low';
-        tT+=tgt;tA+=act;tR+=routes;
+        const cls=pct>=0?'pct-high':'pct-low';
+        tT+=tgt;tA+=act;
         html+=`<tr class="cust-summary-row" onclick="openSpvDetail('${sanitize(code)}','${sanitize(name)}')">
             <td>${sanitize(code)}</td><td style="font-weight:600;color:#333">${sanitize(name)}</td>
             <td style="text-align:center">${routes}</td><td>${tgt.toLocaleString()}</td>
             <td class="sales-val">${act.toLocaleString()}</td>
-            <td><span class="pct-badge ${cls}">${achPct.toFixed(1)}%</span></td>
+            <td><span class="pct-badge ${cls}">${(pct>=0?'+':'')+pct.toFixed(1)}%</span></td>
             <td><div class="mini-progress"><div class="mini-progress-fill" style="width:${Math.min(achPct,100)}%"></div></div></td></tr>`;
     });
     tbody.innerHTML=html;
-    const oP=tT?(tA/tT*100):0;
-    document.getElementById('spvTotRoutes').textContent=tR;
+    const oP=tT?((tA-tT)/tT*100):0;
+    document.getElementById('spvTotRoutes').textContent=data.reduce((a,s)=>a+(s['Routes']||0),0);
     document.getElementById('spvTotTgt').textContent=tT.toLocaleString();
     document.getElementById('spvTotAct').textContent=tA.toLocaleString();
-    document.getElementById('spvTotPct').textContent=oP.toFixed(1)+'%';
+    document.getElementById('spvTotPct').textContent=(oP>=0?'+':'')+oP.toFixed(1)+'%';
     document.querySelectorAll('th.sortable[data-table="sup"]').forEach(th=>{th.classList.remove('sort-asc','sort-desc');if(th.dataset.sort===supSortField)th.classList.add('sort-'+supSortDir);});
 }
 
@@ -266,21 +266,22 @@ async function openSpvDetail(code,name){
             if(!rows.length){document.getElementById('spvPopupBody').innerHTML='<tr><td colspan="7" class="no-data">No route data</td></tr>';return;}
             let html='',tT=0,tA=0;
             rows.forEach(r=>{
-                const tgt=+(r['TGT']||0),act=+(r['ACT-CY']||0),pct=+(r['PctTGT']||0);
+                const tgt=+(r['TGT']||0),act=+(r['ACT-CY']||0);
+                const pct=tgt?((act-tgt)/tgt*100):0;
                 const achPct=tgt?(act/tgt*100):0;
-                const cls=achPct>=100?'pct-high':achPct>=85?'pct-mid':'pct-low';
+                const cls=pct>=0?'pct-high':'pct-low';
                 tT+=tgt;tA+=act;
                 html+=`<tr><td>${sanitize(r['Salesman Code']||'')}</td><td style="font-weight:600">${sanitize(r['Salesman']||'')}</td>
                     <td>${sanitize(r['Route Code']||'')}</td><td>${tgt.toLocaleString()}</td>
                     <td class="sales-val">${act.toLocaleString()}</td>
-                    <td><span class="pct-badge ${cls}">${achPct.toFixed(1)}%</span></td>
+                    <td><span class="pct-badge ${cls}">${(pct>=0?'+':'')+pct.toFixed(1)}%</span></td>
                     <td><div class="mini-progress"><div class="mini-progress-fill" style="width:${Math.min(achPct,100)}%"></div></div></td></tr>`;
             });
             document.getElementById('spvPopupBody').innerHTML=html;
-            const oP=tT?(tA/tT*100):0;
+            const oP=tT?((tA-tT)/tT*100):0;
             document.getElementById('popTotTgt').textContent=tT.toLocaleString();
             document.getElementById('popTotAct').textContent=tA.toLocaleString();
-            document.getElementById('popTotPct').textContent=oP.toFixed(1)+'%';
+            document.getElementById('popTotPct').textContent=(oP>=0?'+':'')+oP.toFixed(1)+'%';
         }
     }catch(e){console.error('Supervisor detail error:',e);}
 }
