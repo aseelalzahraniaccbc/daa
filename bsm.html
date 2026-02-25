@@ -107,7 +107,6 @@
 
         <div class="tab-nav">
             <button class="tab-btn active" onclick="switchTab('supervisors')">👨‍💼 My Supervisors</button>
-            <button class="tab-btn" onclick="switchTab('salesmen')">👥 All Salesmen</button>
             <button class="tab-btn" onclick="switchTab('customers')">🏪 All Sales Data</button>
         </div>
 
@@ -115,28 +114,29 @@
         <div id="tab-supervisors" class="tab-content active">
             <div class="section-card">
                 <h3>👨‍💼 Supervisors Performance</h3>
-                <table class="data-table">
-                    <thead><tr><th class="sortable" data-sort="supervisorCode" data-table="sup">Code</th><th class="sortable" data-sort="supervisor" data-table="sup">Supervisor</th><th data-table="sup">Routes</th><th class="sortable" data-sort="tgt" data-table="sup">Target</th><th class="sortable" data-sort="actCY" data-table="sup">Actual</th><th class="sortable" data-sort="pctTgt" data-table="sup">%TGT</th><th class="sortable" data-sort="remaining" data-table="sup">Remaining</th><th>Progress</th></tr></thead>
-                    <tbody id="spvTableBody"><tr><td colspan="8" class="no-data">Loading…</td></tr></tbody>
+                <table class="data-table" id="spvTable">
+                    <thead><tr><th class="sortable" data-sort="supervisorCode" data-table="sup">Code</th><th class="sortable" data-sort="supervisor" data-table="sup">Supervisor</th><th class="sortable" data-sort="routes" data-table="sup">Routes</th><th class="sortable" data-sort="tgt" data-table="sup">Target</th><th class="sortable" data-sort="actCY" data-table="sup">ACT-CY</th><th class="sortable" data-sort="pctTgt" data-table="sup">%TGT</th><th>Progress</th></tr></thead>
+                    <tbody id="spvTableBody"><tr><td colspan="7" class="no-data">Loading…</td></tr></tbody>
+                    <tfoot><tr class="total-row"><td colspan="2">Total</td><td id="spvTotRoutes">0</td><td id="spvTotTgt">0</td><td id="spvTotAct">0</td><td id="spvTotPct">0%</td><td></td></tr></tfoot>
                 </table>
             </div>
         </div>
 
-        <!-- TAB 2: All Salesmen -->
-        <div id="tab-salesmen" class="tab-content">
-            <div class="section-card">
-                <h3>👥 All Salesmen Performance</h3>
-                <div class="toolbar">
-                    <div class="toolbar-group"><label>Supervisor:</label><select id="smFiltSPV"><option value="">All</option></select></div>
-                    <div class="toolbar-group"><label>Route:</label><select id="smFiltRoute"><option value="">All</option></select></div>
+        <!-- Supervisor Detail Popup -->
+        <div id="spvPopup" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:1000;justify-content:center;align-items:center">
+            <div style="background:#fff;border-radius:15px;padding:30px;max-width:800px;width:90%;max-height:80vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.3)">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+                    <h3 id="spvPopupTitle" style="color:#333;font-size:1.3em">Supervisor Detail</h3>
+                    <button onclick="closeSpvPopup()" style="background:none;border:none;font-size:1.5em;cursor:pointer;color:#999">✕</button>
                 </div>
                 <table class="data-table">
-                    <thead><tr><th class="sortable" data-sort="salesmanCode" data-table="sm">Code</th><th class="sortable" data-sort="salesman" data-table="sm">Salesman</th><th class="sortable" data-sort="routeCode" data-table="sm">Route</th><th class="sortable" data-sort="supervisor" data-table="sm">Supervisor</th><th class="sortable" data-sort="tgt" data-table="sm">Target</th><th class="sortable" data-sort="actCY" data-table="sm">Actual</th><th class="sortable" data-sort="pctTgt" data-table="sm">%TGT</th><th class="sortable" data-sort="remaining" data-table="sm">Remaining</th><th>Progress</th></tr></thead>
-                    <tbody id="smTableBody"><tr><td colspan="9" class="no-data">Loading…</td></tr></tbody>
-                    <tfoot><tr class="total-row"><td colspan="4">Total</td><td class="sales-val" id="smTotTgt">0</td><td class="sales-val" id="smTotAct">0</td><td class="sales-val" id="smTotPct">0%</td><td id="smTotRem">0</td><td></td></tr></tfoot>
+                    <thead><tr><th>Salesman Code</th><th>Salesman</th><th>Route</th><th>Target</th><th>ACT-CY</th><th>%TGT</th><th>Progress</th></tr></thead>
+                    <tbody id="spvPopupBody"><tr><td colspan="7" class="no-data">Loading…</td></tr></tbody>
+                    <tfoot><tr class="total-row"><td colspan="3">Total</td><td id="popTotTgt">0</td><td id="popTotAct">0</td><td id="popTotPct">0%</td><td></td></tr></tfoot>
                 </table>
             </div>
         </div>
+
 
         <!-- TAB 3: All Customers (Summary → Click for Detail) -->
         <div id="tab-customers" class="tab-content">
@@ -174,6 +174,7 @@ function applyApiData(data){
     if(data.bsmData)bsmData=data.bsmData.map(r=>({bsmCode:String(r['BSM Code']||''),branchManager:r['Branch Manager']||'',sector:r['Sector']||'',branch:r['Branch']||'',tgt:toNum(r['TGT']),actCY:toNum(r['ACT-CY']),pctTgt:toNum(r['%TGT'])*100}));
     if(data.masterData)masterData=data.masterData.map(r=>({supervisorCode:String(r['Supervisor Code']||''),salesmanCode:String(r['Salesman Code']||''),branchManager:r['Branch Manager']||'',routeCode:String(r['Route Code']||''),customerCode:String(r['Customer Code']||''),customer:r['Customer']||'',sector:r['Sector']||'',cls:r['Class']||'',region:r['Region']||'',branch:r['Branch']||'',brand:r['Brand']||'',productGroup:r['Product Group']||'',subBrand:r['Sub Brand']||'',product:r['Product']||'',date:String(r['Date']||'').substring(0,10),achCYP:toNum(r['ACH CY (P)']),achLYP:toNum(r['ACH LY (P)']),actCY:toNum(r['ACT-CY']),actLY:toNum(r['ACT-LY'])}));
     if(data.customerSummary)serverCustomerSummary=data.customerSummary;
+    if(data.dates)window._apiDates=data.dates;
     if(data.masterDataTotal)console.log('Server has',data.masterDataTotal,'master rows (not transferred)');
     return true;
 }
@@ -196,69 +197,96 @@ async function loadData(){
     usersData=[];salesmenData=[];supData=[];bsmData=[];masterData=[];
 }
 
+let custTabRendered=false;
 function switchTab(t){
-    ['supervisors','salesmen','customers'].forEach(n=>{
+    ['supervisors','customers'].forEach(n=>{
         document.getElementById('tab-'+n).classList.toggle('active',n===t);
     });
-    document.querySelectorAll('.tab-btn').forEach((b,i)=>{b.classList.toggle('active',i===['supervisors','salesmen','customers'].indexOf(t));});
+    document.querySelectorAll('.tab-btn').forEach((b,i)=>{b.classList.toggle('active',i===['supervisors','customers'].indexOf(t));});
+    if(t==='customers'&&!custTabRendered){custTabRendered=true;loadCustomersByDate();}
 }
 
 /* ══ COLUMN SORT STATE ══ */
 let supSortField='',supSortDir='asc';
 let custPage=1;const CUST_PAGE_SIZE=50;
-let smSortField2='',smSortDir2='asc';
 let custSortField='',custSortDir='asc';
 
-/* ══ TAB 1: Supervisors ══ */
+/* ══ TAB 1: Supervisors (from vw_SupervisorSummary) ══ */
+let spvSummaryData=[];
+async function loadSupervisorSummary(){
+    try{
+        const url=AZURE_API_URL+'?action=supervisorSummary&code='+encodeURIComponent(currentUser.userCode);
+        const r=await fetch(url);
+        if(r.ok){const data=await r.json();spvSummaryData=data.rows||[];renderSPVTable();}
+    }catch(e){console.error('Supervisor summary error:',e);}
+}
+
 function renderSPVTable(){
     const tbody=document.getElementById('spvTableBody');
-    const spvMap={};
-    mySupervisors.forEach(s=>{
-        if(!spvMap[s.supervisorCode]) spvMap[s.supervisorCode]={supervisorCode:s.supervisorCode,supervisor:s.supervisor,routes:[],tgt:0,actCY:0};
-        spvMap[s.supervisorCode].routes.push(s.routeCode);
-        spvMap[s.supervisorCode].target+=s.tgt;
-        spvMap[s.supervisorCode].actCY+=s.actCY;
-    });
-    let spvList=Object.values(spvMap);
-    spvList.forEach(s=>{s.pctTgt=s.tgt?((s.actCY-s.tgt)/s.tgt*100):0;s.remaining=s.tgt-s.actCY;});
-    if(supSortField){const m=supSortDir==='desc'?-1:1;spvList.sort((a,b)=>{const va=a[supSortField],vb=b[supSortField];if(typeof va==='number')return(va-vb)*m;return String(va||'').localeCompare(String(vb||''))*m;});}
-    if(!spvList.length){tbody.innerHTML='<tr><td colspan="8" class="no-data">No supervisors assigned</td></tr>';return;}
-    let html='';
-    spvList.forEach(s=>{
-        const pct=s.pctTgt;const rem=s.remaining;
-        const cls=pct>=0?'pct-high':'pct-low';
-        const achPct=s.tgt?(s.actCY/s.tgt*100):0;
-        html+=`<tr><td>${sanitize(s.supervisorCode)}</td><td style="font-weight:600;color:#333">${sanitize(s.supervisor)}</td><td>${s.routes.join(', ')}</td><td>${s.tgt.toLocaleString()}</td><td class="sales-val">${s.actCY.toLocaleString()}</td><td><span class="pct-badge ${cls}">${(pct>=0?'+':'')+pct.toFixed(1)}%</span></td><td>${rem>0?rem.toLocaleString():'—'}</td><td><div class="mini-progress"><div class="mini-progress-fill" style="width:${Math.min(achPct,100)}%"></div></div></td></tr>`;
+    let data=[...spvSummaryData];
+    if(supSortField){const m=supSortDir==='desc'?-1:1;data.sort((a,b)=>{const va=a[supSortField]||0,vb=b[supSortField]||0;if(typeof va==='number')return(va-vb)*m;return String(va||'').localeCompare(String(vb||''))*m;});}
+    if(!data.length){tbody.innerHTML='<tr><td colspan="7" class="no-data">No supervisors found</td></tr>';return;}
+    let html='',tT=0,tA=0,tR=0;
+    data.forEach(s=>{
+        const code=s['Supervisor Code']||'';
+        const name=s['Supervisor']||code;
+        const routes=s['Routes']||0;
+        const tgt=+(s['TGT']||0);
+        const act=+(s['ACT-CY']||0);
+        const pct=+(s['PctTGT']||0);
+        const achPct=tgt?(act/tgt*100):0;
+        const cls=achPct>=100?'pct-high':achPct>=85?'pct-mid':'pct-low';
+        tT+=tgt;tA+=act;tR+=routes;
+        html+=`<tr class="cust-summary-row" onclick="openSpvDetail('${sanitize(code)}','${sanitize(name)}')">
+            <td>${sanitize(code)}</td><td style="font-weight:600;color:#333">${sanitize(name)}</td>
+            <td style="text-align:center">${routes}</td><td>${tgt.toLocaleString()}</td>
+            <td class="sales-val">${act.toLocaleString()}</td>
+            <td><span class="pct-badge ${cls}">${achPct.toFixed(1)}%</span></td>
+            <td><div class="mini-progress"><div class="mini-progress-fill" style="width:${Math.min(achPct,100)}%"></div></div></td></tr>`;
     });
     tbody.innerHTML=html;
+    const oP=tT?(tA/tT*100):0;
+    document.getElementById('spvTotRoutes').textContent=tR;
+    document.getElementById('spvTotTgt').textContent=tT.toLocaleString();
+    document.getElementById('spvTotAct').textContent=tA.toLocaleString();
+    document.getElementById('spvTotPct').textContent=oP.toFixed(1)+'%';
     document.querySelectorAll('th.sortable[data-table="sup"]').forEach(th=>{th.classList.remove('sort-asc','sort-desc');if(th.dataset.sort===supSortField)th.classList.add('sort-'+supSortDir);});
 }
 
-/* ══ TAB 2: All Salesmen ══ */
-function renderSMTable(){
-    const fSPV=document.getElementById('smFiltSPV').value;
-    const fRT=document.getElementById('smFiltRoute')?document.getElementById('smFiltRoute').value:'';
-    let data=[...mySalesmen];
-    if(fSPV) data=data.filter(s=>String(s.assignedSUP)===fSPV);
-    if(fRT) data=data.filter(s=>String(s.routeCode)===fRT);
-    data.forEach(s=>{s.remaining=s.tgt-s.actCY;const spv=mySupervisors.find(x=>x.supervisorCode==s.assignedSUP);s.supervisor=spv?spv.supervisor:String(s.assignedSUP);});
-    if(smSortField2){const m=smSortDir2==='desc'?-1:1;data.sort((a,b)=>{const va=a[smSortField2],vb=b[smSortField2];if(typeof va==='number')return(va-vb)*m;return String(va||'').localeCompare(String(vb||''))*m;});}
-    const tbody=document.getElementById('smTableBody');
-    if(!data.length){tbody.innerHTML='<tr><td colspan="9" class="no-data">No salesmen found</td></tr>';return;}
-    let html='',tT=0,tA=0;
-    data.forEach(s=>{
-        const rem=s.tgt-s.actCY;const pct=s.pctTgt;
-        const cls=pct>=0?'pct-high':'pct-low';
-        const achPct=s.tgt?(s.actCY/s.tgt*100):0;
-        tT+=s.tgt;tA+=s.actCY;
-        html+=`<tr><td>${sanitize(s.salesmanCode)}</td><td style="font-weight:600;color:#333">${sanitize(s.salesman)}</td><td>${sanitize(s.routeCode)}</td><td>${sanitize(s.supervisor)}</td><td>${s.tgt.toLocaleString()}</td><td class="sales-val">${s.actCY.toLocaleString()}</td><td><span class="pct-badge ${cls}">${(pct>=0?'+':'')+pct.toFixed(1)}%</span></td><td>${rem>0?rem.toLocaleString():'—'}</td><td><div class="mini-progress"><div class="mini-progress-fill" style="width:${Math.min(achPct,100)}%"></div></div></td></tr>`;
-    });
-    tbody.innerHTML=html;
-    const oP=tT?((tA-tT)/tT*100):0;
-    document.getElementById('smTotTgt').textContent=tT.toLocaleString();document.getElementById('smTotAct').textContent=tA.toLocaleString();
-    document.getElementById('smTotPct').textContent=(oP>=0?'+':'')+oP.toFixed(1)+'%';document.getElementById('smTotRem').textContent=(tT-tA>0?(tT-tA).toLocaleString():'—');
-    document.querySelectorAll('th.sortable[data-table="sm"]').forEach(th=>{th.classList.remove('sort-asc','sort-desc');if(th.dataset.sort===smSortField2)th.classList.add('sort-'+smSortDir2);});
+async function openSpvDetail(code,name){
+    document.getElementById('spvPopupTitle').textContent=name+' ('+code+') — Route Details';
+    document.getElementById('spvPopupBody').innerHTML='<tr><td colspan="7" class="no-data">Loading…</td></tr>';
+    document.getElementById('spvPopup').style.display='flex';
+    try{
+        const url=AZURE_API_URL+'?action=supervisorDetail&supervisor='+encodeURIComponent(code);
+        const r=await fetch(url);
+        if(r.ok){
+            const data=await r.json();
+            const rows=data.rows||[];
+            if(!rows.length){document.getElementById('spvPopupBody').innerHTML='<tr><td colspan="7" class="no-data">No route data</td></tr>';return;}
+            let html='',tT=0,tA=0;
+            rows.forEach(r=>{
+                const tgt=+(r['TGT']||0),act=+(r['ACT-CY']||0),pct=+(r['PctTGT']||0);
+                const achPct=tgt?(act/tgt*100):0;
+                const cls=achPct>=100?'pct-high':achPct>=85?'pct-mid':'pct-low';
+                tT+=tgt;tA+=act;
+                html+=`<tr><td>${sanitize(r['Salesman Code']||'')}</td><td style="font-weight:600">${sanitize(r['Salesman']||'')}</td>
+                    <td>${sanitize(r['Route Code']||'')}</td><td>${tgt.toLocaleString()}</td>
+                    <td class="sales-val">${act.toLocaleString()}</td>
+                    <td><span class="pct-badge ${cls}">${achPct.toFixed(1)}%</span></td>
+                    <td><div class="mini-progress"><div class="mini-progress-fill" style="width:${Math.min(achPct,100)}%"></div></div></td></tr>`;
+            });
+            document.getElementById('spvPopupBody').innerHTML=html;
+            const oP=tT?(tA/tT*100):0;
+            document.getElementById('popTotTgt').textContent=tT.toLocaleString();
+            document.getElementById('popTotAct').textContent=tA.toLocaleString();
+            document.getElementById('popTotPct').textContent=oP.toFixed(1)+'%';
+        }
+    }catch(e){console.error('Supervisor detail error:',e);}
 }
+function closeSpvPopup(){document.getElementById('spvPopup').style.display='none';}
+
+
 
 /* ══ TAB 3: Customer Summary (click to detail) ══ */
 function getCustomerSummaries(){
@@ -362,10 +390,8 @@ function updatePagination(total,totalPages){
 function populateFilters(){
     const fill=(id,vals,lbl)=>{const el=document.getElementById(id);if(!el)return;el.innerHTML=`<option value="">All ${lbl}</option>`;vals.forEach(v=>{el.innerHTML+=`<option value="${sanitize(v[0])}">${sanitize(v[1])}</option>`;});};
     const spvUniq=[...new Map(mySupervisors.map(s=>[s.supervisorCode,s])).values()];
-    fill('smFiltSPV',spvUniq.map(s=>[String(s.supervisorCode),`${s.supervisor} (${s.supervisorCode})`]),'Supervisors');
     fill('filtSM',mySalesmen.map(s=>[String(s.salesmanCode),`${s.salesman} (${s.salesmanCode})`]),'Salesmen');
     fill('filtSalesman',mySalesmen.map(s=>[String(s.salesmanCode),`${s.salesman} (${s.salesmanCode})`]),'Salesmen');
-    fill('smFiltRoute',[...new Set(mySalesmen.map(s=>String(s.routeCode)))].sort((a,b)=>Number(a)-Number(b)).map(v=>[v,v]),'Routes');
     const src=serverCustomerSummary||[];
     fill('filtSector',[...new Set(src.map(r=>(r['Sector']||'').trim()).filter(v=>v))].sort().map(v=>[v,v]),'Sectors');
     fill('filtClass',[...new Set(src.map(r=>(r['Class']||'').trim()).filter(v=>v))].sort().map(v=>[v,v]),'Classes');
@@ -375,33 +401,35 @@ function showDashboard(user){
     document.getElementById('loginScreen').style.display='none';document.getElementById('dashboard').classList.add('active');
     document.getElementById('dashName').textContent=sanitize(user.userName);document.getElementById('dashCode').textContent=sanitize(user.userCode);
 
-    // Get supervisors assigned to this BSM
     mySupervisors=supData.filter(s=>String(s.assignedBSM)==String(user.userCode));
-    // Get all supervisor codes under this BSM
     const spvCodes=[...new Set(mySupervisors.map(s=>s.supervisorCode))];
-    // Get salesmen under supervisors + salesmen directly assigned to BSM
     const smFromSup=salesmenData.filter(s=>spvCodes.includes(String(s.assignedSUP)));
     const smDirect=salesmenData.filter(s=>String(s.assignedSUP)==String(user.userCode));
-    // Deduplicate
     const smMap={};
     [...smFromSup,...smDirect].forEach(s=>{smMap[String(s.salesmanCode)]=s;});
     mySalesmen=Object.values(smMap);
-    // Get all master data
-    const smCodes=mySalesmen.map(s=>String(s.salesmanCode));
-    myMasterData=masterData.filter(r=>smCodes.includes(String(r.salesmanCode))||String(r.supervisorCode)==String(user.userCode));
 
-    // Summary
-    const tT=mySalesmen.reduce((a,s)=>a+s.tgt,0),tA=mySalesmen.reduce((a,s)=>a+s.actCY,0);
+    // Summary from salesmenData (includes BSM direct routes)
+    const tT=mySalesmen.reduce((a,s)=>a+s.tgt,0);
+    const tA=mySalesmen.reduce((a,s)=>a+s.actCY,0);
+    const growth=tT?((tA-tT)/tT*100):0;
     document.getElementById('sumSPV').textContent=spvCodes.length;
     document.getElementById('sumSM').textContent=mySalesmen.length;
     document.getElementById('sumTgt').textContent=tT.toLocaleString();
     document.getElementById('sumAct').textContent=tA.toLocaleString();
-    const growth=tT?((tA-tT)/tT*100):0;
     document.getElementById('sumPct').textContent=(growth>=0?'+':'')+growth.toFixed(1)+'%';
-    document.getElementById('sumCust').textContent=serverCustomerSummary&&serverCustomerSummary.length?serverCustomerSummary.length:[...new Set(myMasterData.map(r=>r.customerCode))].length;
+    document.getElementById('sumCust').textContent=serverCustomerSummary&&serverCustomerSummary.length?serverCustomerSummary.length:0;
 
-    populateFilters();renderSPVTable();renderSMTable();
-    // Customer table renders on first tab click (deferred for speed)
+    // Load dates for filter
+    if(window._apiDates&&window._apiDates.length){
+        const sel=document.getElementById('filtDate');
+        if(sel){sel.innerHTML='<option value="">All Dates</option>';
+        window._apiDates.forEach(d=>{sel.innerHTML+='<option value="'+d+'">'+d+'</option>';});}
+        allDatesLoaded=true;
+    }
+
+    populateFilters();
+    loadSupervisorSummary();
 }
 
 document.addEventListener('DOMContentLoaded',()=>{
@@ -410,13 +438,10 @@ document.addEventListener('DOMContentLoaded',()=>{
     });
     const filtDateEl=document.getElementById('filtDate');
     if(filtDateEl)filtDateEl.addEventListener('change',()=>{loadCustomersByDate();});
-    document.getElementById('smFiltSPV').addEventListener('change',renderSMTable);
-    if(document.getElementById('smFiltRoute'))document.getElementById('smFiltRoute').addEventListener('change',renderSMTable);
     document.querySelectorAll('th.sortable').forEach(th=>{
         th.addEventListener('click',function(){
             const f=this.dataset.sort,t=this.dataset.table||'cust';
             if(t==='sup'){if(supSortField===f)supSortDir=supSortDir==='asc'?'desc':'asc';else{supSortField=f;supSortDir='asc';}renderSPVTable();}
-            else if(t==='sm'){if(smSortField2===f)smSortDir2=smSortDir2==='asc'?'desc':'asc';else{smSortField2=f;smSortDir2='asc';}renderSMTable();}
             else{if(custSortField===f)custSortDir=custSortDir==='asc'?'desc':'asc';else{custSortField=f;custSortDir='asc';}renderCustTable();}
         });
     });
@@ -458,6 +483,8 @@ document.getElementById('loginForm').addEventListener('submit',async function(e)
 
 function showError(m){const e=document.getElementById('errorMessage');e.textContent=m;e.style.display='block';setTimeout(()=>e.style.display='none',3000);}
 function logout(){sessionStorage.removeItem('loggedInBSM');currentUser=null;document.getElementById('loginForm').reset();document.getElementById('dashboard').classList.remove('active');document.getElementById('loginScreen').style.display='flex';}
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeSpvPopup();});
+document.getElementById('spvPopup').addEventListener('click',e=>{if(e.target.id==='spvPopup')closeSpvPopup();});
 </script>
 </body>
 </html>
