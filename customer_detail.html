@@ -7,7 +7,7 @@
     <style>
         *{margin:0;padding:0;box-sizing:border-box}
         body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#f0f4f0;min-height:100vh;padding:20px}
-        .page-container{max-width:1100px;margin:0 auto}
+        .page-container{max-width:1400px;margin:0 auto}
 
         /* Header */
         .page-header{background:linear-gradient(135deg,#43e97b,#38f9d7);color:#fff;border-radius:15px;padding:25px 30px;margin-bottom:20px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:15px}
@@ -24,13 +24,13 @@
         .var-positive{color:#2e7d32}.var-negative{color:#c62828}
 
         /* Section Cards */
-        .section-card{background:#fff;border-radius:15px;padding:25px 30px;margin-bottom:20px;box-shadow:0 2px 15px rgba(0,0,0,.05)}
+        .section-card{background:#fff;border-radius:15px;padding:25px 30px;margin-bottom:20px;box-shadow:0 2px 15px rgba(0,0,0,.05);overflow-x:auto}
         .section-card h3{font-size:1.2em;color:#333;margin-bottom:15px;display:flex;align-items:center;gap:8px}
 
         /* Data Table */
-        .data-table{width:100%;border-collapse:collapse}
-        .data-table th{background:linear-gradient(135deg,#e8f5e9,#c8e6c9);padding:12px;text-align:left;color:#333;font-weight:600;font-size:.85em;position:sticky;top:0}
-        .data-table td{padding:10px 12px;border-bottom:1px solid #f0f0f0;color:#555;font-size:.9em}
+        .data-table{width:100%;border-collapse:collapse;min-width:900px}
+        .data-table th{background:linear-gradient(135deg,#e8f5e9,#c8e6c9);padding:12px;text-align:left;color:#333;font-weight:600;font-size:.85em;position:sticky;top:0;white-space:nowrap}
+        .data-table td{padding:10px 12px;border-bottom:1px solid #f0f0f0;color:#555;font-size:.9em;white-space:nowrap}
         .data-table tbody tr:hover{background:#f9fdf9}
         .sales-val{font-weight:600;color:#333}
         .total-row{background:#e8f5e9;font-weight:700}
@@ -176,9 +176,9 @@
             <div class="toolbar-group"><label>Date:</label><select id="filtDate"><option value="">All</option></select></div>
         </div>
         <table class="data-table">
-            <thead><tr><th class="sortable" data-sort="sector">Sector</th><th class="sortable" data-sort="cls">Class</th><th class="sortable" data-sort="brand">Brand</th><th class="sortable" data-sort="productGroup">Product Group</th><th class="sortable" data-sort="subBrand">Sub Brand</th><th class="sortable" data-sort="product">Product</th><th class="sortable" data-sort="date">Date</th><th class="sortable" data-sort="l3s">L3S</th><th class="sortable" data-sort="l6s">L6S</th><th class="sortable" data-sort="achCYP">ACH CY</th><th class="sortable" data-sort="achLYP">ACH LY</th><th class="sortable" data-sort="actCY">ACT-CY</th><th class="sortable" data-sort="actLY">ACT-LY</th><th class="sortable" data-sort="varPct">%YoY Growth</th></tr></thead>
+            <thead><tr><th class="sortable" data-sort="sector">Sector</th><th class="sortable" data-sort="cls">Class</th><th class="sortable" data-sort="brand">Brand</th><th class="sortable" data-sort="productGroup">Product Group</th><th class="sortable" data-sort="subBrand">Sub Brand</th><th class="sortable" data-sort="product">Product</th><th class="sortable" data-sort="date">Date</th><th class="sortable" data-sort="achCYP">ACH CY</th><th class="sortable" data-sort="achLYP">ACH LY</th><th class="sortable" data-sort="actCY">ACT-CY</th><th class="sortable" data-sort="actLY">ACT-LY</th><th class="sortable" data-sort="varPct">%YoY Growth</th></tr></thead>
             <tbody id="detailTableBody"><tr><td colspan="14" class="no-data">Loading…</td></tr></tbody>
-            <tfoot><tr class="total-row"><td colspan="7">Total</td><td id="detailTotalL3S">0</td><td id="detailTotalL6S">0</td><td id="detailTotalACHCY">0</td><td id="detailTotalACHLY">0</td><td class="sales-val" id="detailTotalCY">0</td><td id="detailTotalLY">0</td><td></td></tr></tfoot>
+            <tfoot><tr class="total-row"><td colspan="7">Total</td><td id="detailTotalACHCY">0</td><td id="detailTotalACHLY">0</td><td class="sales-val" id="detailTotalCY">0</td><td id="detailTotalLY">0</td><td></td></tr></tfoot>
         </table>
     </div>
 
@@ -327,11 +327,9 @@ function renderDetailTable(){
         tCY+=cy;tLY+=ly;
         const v=ly?((cy-ly)/ly*100):0;
         const vcls=v>=0?'var-positive':'var-negative';
-        html+='<tr><td>'+sanitize(r.sector||'')+'</td><td>'+sanitize(r.cls||'')+'</td><td style="font-weight:600;color:#2e7d32">'+sanitize(r.brand)+'</td><td>'+sanitize(r.productGroup)+'</td><td>'+sanitize(r.subBrand)+'</td><td>'+sanitize(r.product)+'</td><td>'+sanitize(r.date)+'</td><td>'+(+(r.l3s)||0).toLocaleString()+'</td><td>'+(+(r.l6s)||0).toLocaleString()+'</td><td>'+(+(r.achCYP)||0).toLocaleString()+'</td><td>'+(+(r.achLYP)||0).toLocaleString()+'</td><td class="sales-val">'+cy.toLocaleString()+'</td><td>'+ly.toLocaleString()+'</td><td><span class="'+vcls+'">'+(v>=0?'+':'')+v.toFixed(1)+'%</span></td></tr>';
+        html+='<tr><td>'+sanitize(r.sector||'')+'</td><td>'+sanitize(r.cls||'')+'</td><td style="font-weight:600;color:#2e7d32">'+sanitize(r.brand)+'</td><td>'+sanitize(r.productGroup)+'</td><td>'+sanitize(r.subBrand)+'</td><td>'+sanitize(r.product)+'</td><td>'+sanitize(r.date)+'</td><td>'+(+(r.achCYP)||0).toLocaleString()+'</td><td>'+(+(r.achLYP)||0).toLocaleString()+'</td><td class="sales-val">'+cy.toLocaleString()+'</td><td>'+ly.toLocaleString()+'</td><td><span class="'+vcls+'">'+(v>=0?'+':'')+v.toFixed(1)+'%</span></td></tr>';
     });
     tbody.innerHTML=html;
-    document.getElementById('detailTotalL3S').textContent=data.reduce((a,r)=>a+(+(r.l3s)||0),0).toLocaleString();
-    document.getElementById('detailTotalL6S').textContent=data.reduce((a,r)=>a+(+(r.l6s)||0),0).toLocaleString();
     document.getElementById('detailTotalACHCY').textContent=data.reduce((a,r)=>a+(+(r.achCYP)||0),0).toLocaleString();
     document.getElementById('detailTotalACHLY').textContent=data.reduce((a,r)=>a+(+(r.achLYP)||0),0).toLocaleString();
     document.getElementById('detailTotalCY').textContent=tCY.toLocaleString();
