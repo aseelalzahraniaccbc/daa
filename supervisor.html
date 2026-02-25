@@ -217,6 +217,7 @@ function applyApiData(data){
     if(data.masterData)masterData=data.masterData.map(r=>({supervisorCode:String(r['Supervisor Code']||''),salesmanCode:String(r['Salesman Code']||''),branchManager:r['Branch Manager']||'',routeCode:String(r['Route Code']||''),customerCode:String(r['Customer Code']||''),customer:r['Customer']||'',sector:r['Sector']||'',cls:r['Class']||'',region:r['Region']||'',branch:r['Branch']||'',brand:r['Brand']||'',productGroup:r['Product Group']||'',subBrand:r['Sub Brand']||'',product:r['Product']||'',date:String(r['Date']||'').substring(0,10),achCYP:toNum(r['ACH CY (P)']),achLYP:toNum(r['ACH LY (P)']),actCY:toNum(r['ACT-CY']),actLY:toNum(r['ACT-LY'])}));
     if(data.customerSummary)serverCustomerSummary=data.customerSummary;
     if(data.dates)window._apiDates=data.dates;
+    if(data.dashSummary)window._dashSummary=data.dashSummary;
     if(data.masterDataTotal)console.log('Server has',data.masterDataTotal,'master rows (not transferred)');
     return true;
 }
@@ -537,16 +538,25 @@ function showDashboard(user){
     const smCodes=mySalesmen.map(s=>String(s.salesmanCode));
     myMasterData=masterData.filter(r=>smCodes.includes(String(r.salesmanCode)));
 
-    // Summary
-    const tTgt=mySalesmen.reduce((a,s)=>a+s.tgt,0);
-    const tAct=mySalesmen.reduce((a,s)=>a+s.actCY,0);
-    const uniqueCustomers=serverCustomerSummary||[];
-    document.getElementById('sumSalesmen').textContent=mySalesmen.length;
-    document.getElementById('sumTarget').textContent=tTgt.toLocaleString();
-    document.getElementById('sumActual').textContent=tAct.toLocaleString();
-    const growth=tTgt?((tAct-tTgt)/tTgt*100):0;
-    document.getElementById('sumPct').textContent=(growth>=0?'+':'')+growth.toFixed(1)+'%';
-    document.getElementById('sumCustomers').textContent=uniqueCustomers.length;
+    // Summary from DB query (accurate totals)
+    if(window._dashSummary){
+        const ds=window._dashSummary;
+        document.getElementById('sumSalesmen').textContent=ds['TotalSalesmen']||0;
+        document.getElementById('sumTarget').textContent=(+(ds['TotalTGT']||0)).toLocaleString();
+        document.getElementById('sumActual').textContent=(+(ds['TotalACT']||0)).toLocaleString();
+        const growth=+(ds['Growth']||0);
+        document.getElementById('sumPct').textContent=(growth>=0?'+':'')+growth.toFixed(1)+'%';
+        document.getElementById('sumCustomers').textContent=ds['TotalCustomers']||0;
+    } else {
+        const tTgt=mySalesmen.reduce((a,s)=>a+s.tgt,0);
+        const tAct=mySalesmen.reduce((a,s)=>a+s.actCY,0);
+        const uniqueCustomers=[...new Set(myMasterData.map(r=>r.customerCode))];
+        document.getElementById('sumSalesmen').textContent=mySalesmen.length;
+        document.getElementById('sumTarget').textContent=tTgt.toLocaleString();
+        document.getElementById('sumActual').textContent=tAct.toLocaleString();
+        document.getElementById('sumPct').textContent=(tTgt?((tAct-tTgt)/tTgt*100):0).toFixed(1)+'%';
+        document.getElementById('sumCustomers').textContent=uniqueCustomers.length;
+    }
 
     renderSalesmenTable();
     populateCustFilters();
