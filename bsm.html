@@ -147,6 +147,7 @@
                     <div class="toolbar-group"><label>Salesman:</label><select id="filtSM"><option value="">All</option></select></div>
                     <div class="toolbar-group"><label>Sector:</label><select id="filtSector"><option value="">All</option></select></div>
                     <div class="toolbar-group"><label>Class:</label><select id="filtClass"><option value="">All</option></select></div>
+                    <div class="toolbar-group"><label>Date:</label><select id="filtDate"><option value="">All Dates</option></select></div>
                 </div>
                 <table class="data-table" id="custTable">
                     <thead><tr><th style="width:30px"></th><th class="sortable" data-sort="code" data-table="cust">Code</th><th class="sortable" data-sort="customer" data-table="cust">Customer</th><th class="sortable" data-sort="salesman" data-table="cust">Salesman</th><th class="sortable" data-sort="routeCode" data-table="cust">Route</th><th class="sortable" data-sort="sector" data-table="cust">Sector</th><th class="sortable" data-sort="cls" data-table="cust">Class</th><th class="sortable" data-sort="totalCY" data-table="cust">ACT-CY</th><th class="sortable" data-sort="totalLY" data-table="cust">ACT-LY</th><th class="sortable" data-sort="varPct" data-table="cust">%YoY Growth</th></tr></thead>
@@ -407,6 +408,8 @@ document.addEventListener('DOMContentLoaded',()=>{
     ['filtSM','filtSector','filtClass'].forEach(id=>{
         const el=document.getElementById(id);if(el)el.addEventListener(el.tagName==='INPUT'?'input':'change',()=>{custPage=1;renderCustTable();});
     });
+    const filtDateEl=document.getElementById('filtDate');
+    if(filtDateEl)filtDateEl.addEventListener('change',()=>{loadCustomersByDate();});
     document.getElementById('smFiltSPV').addEventListener('change',renderSMTable);
     if(document.getElementById('smFiltRoute'))document.getElementById('smFiltRoute').addEventListener('change',renderSMTable);
     document.querySelectorAll('th.sortable').forEach(th=>{
@@ -418,6 +421,26 @@ document.addEventListener('DOMContentLoaded',()=>{
         });
     });
 });
+
+
+async function loadCustomersByDate(){
+    const dateVal=document.getElementById('filtDate')?document.getElementById('filtDate').value:'';
+    const url=AZURE_API_URL+'?action=customersByDate&code='+encodeURIComponent(currentUser.userCode)+(dateVal?'&date='+encodeURIComponent(dateVal):'');
+    try{
+        const r=await fetch(url);
+        if(r.ok){
+            const data=await r.json();
+            if(data.customerSummary){serverCustomerSummary=data.customerSummary;}
+            if(data.dates&&!allDatesLoaded){
+                allDatesLoaded=true;
+                const sel=document.getElementById('filtDate');
+                if(sel){sel.innerHTML='<option value="">All Dates</option>';
+                data.dates.forEach(d=>{sel.innerHTML+='<option value="'+d+'">'+d+'</option>';});}
+            }
+            custPage=1;renderCustTable();
+        }
+    }catch(e){console.error('Date filter error:',e);}
+}
 
 window.onload=async function(){await loadData();const s=sessionStorage.getItem('loggedInBSM');if(s){const u=JSON.parse(s);
     if(AZURE_API_URL){const ok=await loadFromAzure(u.userCode);if(!ok){sessionStorage.removeItem('loggedInBSM');return;}}
