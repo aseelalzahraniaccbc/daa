@@ -170,17 +170,20 @@
                 if(data.lastDate){
                     lbl.textContent='Last data update: '+data.lastDate;
                     el.style.display='block';
-                    // Check if today
-                    const today=new Date().toISOString().split('T')[0];
-                    const isToday=data.lastDate===today||data.lastDate===new Date().toLocaleDateString('en-GB');
-                    if(isToday){
+                    // Check if data is from yesterday (= up to date)
+                    const lastDateParsed=new Date(data.lastDate);
+                    const today=new Date();
+                    today.setHours(0,0,0,0);
+                    lastDateParsed.setHours(0,0,0,0);
+                    const diffDays=Math.round((today-lastDateParsed)/(1000*60*60*24));
+                    if(diffDays<=1){
                         el.style.background='linear-gradient(135deg,#d4edda,#c3e6cb)';
                         el.style.color='#155724';
-                        lbl.textContent='✅ Data is up to date — Last update: '+data.lastDate;
+                        lbl.textContent='✅ Data is up to date — Last sales date: '+data.lastDate;
                     } else {
                         el.style.background='linear-gradient(135deg,#fff3cd,#ffeaa7)';
                         el.style.color='#856404';
-                        lbl.textContent='⚠️ Data last updated: '+data.lastDate;
+                        lbl.textContent='⚠️ Data needs update — Last sales date: '+data.lastDate+' ('+diffDays+' days ago)';
                     }
                 }
             }
