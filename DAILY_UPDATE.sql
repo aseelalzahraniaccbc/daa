@@ -1,0 +1,123 @@
+-- ══════════════════════════════════════════════════════════════
+-- DAILY UPDATE SCRIPT
+-- Updates: Sales (append yesterday), SalesmenData, SUPdata, BSMdata
+-- Just copy, paste and run in Azure Query Editor
+-- ══════════════════════════════════════════════════════════════
+
+
+-- ══ STEP 1: APPEND YESTERDAY SALES ══
+DROP TABLE IF EXISTS #TempSales;
+CREATE TABLE #TempSales (
+    [Customer Code]   NVARCHAR(50),
+    [Salesman Code]   NVARCHAR(50),
+    [PK_ProductID]    NVARCHAR(50),
+    [Supervisor Code] NVARCHAR(50),
+    [Route Code]      NVARCHAR(50),
+    [DayDate]         NVARCHAR(20),
+    [ACH CY (P)]      DECIMAL(18,2),
+    [ACH LY (P)]      DECIMAL(18,2),
+    [ACT-CY]          DECIMAL(18,2),
+    [ACT-LY]          DECIMAL(18,2)
+);
+BULK INSERT #TempSales
+FROM 'Sales.csv'
+WITH (DATA_SOURCE='BlobStorage', FORMAT='CSV', FIRSTROW=2, FIELDTERMINATOR=',', ROWTERMINATOR='0x0a', TABLOCK, BATCHSIZE=50000);
+
+INSERT INTO Sales ([Customer Code],[Salesman Code],[PK_ProductID],[Supervisor Code],[Route Code],[DayDate],[ACH CY (P)],[ACH LY (P)],[ACT-CY],[ACT-LY])
+SELECT * FROM #TempSales;
+DROP TABLE #TempSales;
+
+UPDATE Sales SET [Customer Code]=LTRIM(RTRIM([Customer Code])), [Salesman Code]=LTRIM(RTRIM([Salesman Code])), [PK_ProductID]=LTRIM(RTRIM([PK_ProductID]))
+WHERE [Customer Code]!=LTRIM(RTRIM([Customer Code])) OR [Salesman Code]!=LTRIM(RTRIM([Salesman Code])) OR [PK_ProductID]!=LTRIM(RTRIM([PK_ProductID]));
+
+PRINT '>> Step 1: Sales appended';
+SELECT 'Sales' AS [Table], COUNT(*) AS [Total Rows] FROM Sales;
+
+
+-- ══ STEP 2: REPLACE SALESMENDATA ══
+DELETE FROM SalesmenData;
+DBCC CHECKIDENT ('SalesmenData', RESEED, 0);
+
+DROP TABLE IF EXISTS #TempSM;
+CREATE TABLE #TempSM (
+    [Salesman Code] NVARCHAR(20),
+    [Salesman]      NVARCHAR(100),
+    [Assigned SUP]  NVARCHAR(20),
+    [Route Code]    NVARCHAR(20),
+    [TGT]           DECIMAL(18,2),
+    [ACT-CY]        DECIMAL(18,2),
+    [%TGT]          DECIMAL(8,2)
+);
+BULK INSERT #TempSM
+FROM 'Salesmendata.csv'
+WITH (DATA_SOURCE='BlobStorage', FORMAT='CSV', FIRSTROW=2, FIELDTERMINATOR=',', ROWTERMINATOR='0x0a', TABLOCK);
+
+INSERT INTO SalesmenData ([Salesman Code],[Salesman],[Assigned SUP],[Route Code],[TGT],[ACT-CY],[%TGT])
+SELECT * FROM #TempSM;
+DROP TABLE #TempSM;
+
+PRINT '>> Step 2: SalesmenData replaced';
+SELECT 'SalesmenData' AS [Table], COUNT(*) AS [Total Rows] FROM SalesmenData;
+
+
+-- ══ STEP 3: REPLACE SUPDATA ══
+DELETE FROM SUPdata;
+DBCC CHECKIDENT ('SUPdata', RESEED, 0);
+
+DROP TABLE IF EXISTS #TempSUP;
+CREATE TABLE #TempSUP (
+    [Supervisor Code] NVARCHAR(20),
+    [Supervisor]      NVARCHAR(100),
+    [Route Code]      NVARCHAR(20),
+    [AssignedBSM]     NVARCHAR(20),
+    [TGT]             DECIMAL(18,2),
+    [ACT-CY]          DECIMAL(18,2),
+    [%TGT]            DECIMAL(8,2)
+);
+BULK INSERT #TempSUP
+FROM 'SUPdata.csv'
+WITH (DATA_SOURCE='BlobStorage', FORMAT='CSV', FIRSTROW=2, FIELDTERMINATOR=',', ROWTERMINATOR='0x0a', TABLOCK);
+
+INSERT INTO SUPdata ([Supervisor Code],[Supervisor],[Route Code],[AssignedBSM],[TGT],[ACT-CY],[%TGT])
+SELECT * FROM #TempSUP;
+DROP TABLE #TempSUP;
+
+PRINT '>> Step 3: SUPdata replaced';
+SELECT 'SUPdata' AS [Table], COUNT(*) AS [Total Rows] FROM SUPdata;
+
+
+-- ══ STEP 4: REPLACE BSMDATA ══
+DELETE FROM BSMdata;
+DBCC CHECKIDENT ('BSMdata', RESEED, 0);
+
+DROP TABLE IF EXISTS #TempBSM;
+CREATE TABLE #TempBSM (
+    [BSM Code]        NVARCHAR(20),
+    [Branch Manager]  NVARCHAR(100),
+    [Sector]          NVARCHAR(100),
+    [Branch]          NVARCHAR(100),
+    [TGT]             DECIMAL(18,2),
+    [ACT-CY]          DECIMAL(18,2),
+    [%TGT]            DECIMAL(8,2)
+);
+BULK INSERT #TempBSM
+FROM 'BSMdata.csv'
+WITH (DATA_SOURCE='BlobStorage', FORMAT='CSV', FIRSTROW=2, FIELDTERMINATOR=',', ROWTERMINATOR='0x0a', TABLOCK);
+
+INSERT INTO BSMdata ([BSM Code],[Branch Manager],[Sector],[Branch],[TGT],[ACT-CY],[%TGT])
+SELECT * FROM #TempBSM;
+DROP TABLE #TempBSM;
+
+PRINT '>> Step 4: BSMdata replaced';
+SELECT 'BSMdata' AS [Table], COUNT(*) AS [Total Rows] FROM BSMdata;
+
+
+-- ══ STEP 5: UPDATE STATISTICS ══
+UPDATE STATISTICS Sales WITH FULLSCAN;
+UPDATE STATISTICS SalesmenData WITH FULLSCAN;
+UPDATE STATISTICS SUPdata WITH FULLSCAN;
+UPDATE STATISTICS BSMdata WITH FULLSCAN;
+
+PRINT '>> Step 5: Statistics updated';
+PRINT '>> ALL DONE — Now clear cache:';
+PRINT '>> https://salesap-g4ceg7arc2bkbvfx.centralus-01.azurewebsites.net/api/api?action=clearCache';
