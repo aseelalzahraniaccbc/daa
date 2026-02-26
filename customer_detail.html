@@ -405,9 +405,9 @@ function submitSurvey(){
     const btn=document.getElementById('surveySubmitBtn');
     btn.disabled=true;btn.textContent='Submitting...';
 
-    const payload={date:dateStr,time:timeStr,salesman:spvName,salesmanCode:String(spvCode),customerName:custName,customerCode:custCode,rating:selectedRating,photos:selectedPhotos.map(p=>({name:p.name,content:p.data.split(',')[1]||''}))};
+    const payload={date:dateStr,time:timeStr,Supervisor:spvName,SupervisorCode:String(spvCode),customerName:custName,customerCode:custCode,rating:selectedRating,photos:selectedPhotos.map(p=>({name:p.name,content:p.data.split(',')[1]||''}))};
 
-    const survey={id:Date.now(),customerName:custName,customerCode:custCode,rating:selectedRating,photoCount:selectedPhotos.length,date:dateStr,time:timeStr,salesman:spvName,salesmanCode:spvCode,status:'pending'};
+    const survey={id:Date.now(),customerName:custName,customerCode:custCode,rating:selectedRating,photoCount:selectedPhotos.length,date:dateStr,time:timeStr,supervisorName:spvName,supervisorCode:spvCode,status:'pending'};
 
     if(POWER_AUTOMATE_URL){
         fetch(POWER_AUTOMATE_URL,{method:'POST',headers:{'Content-Type':'application/json'},mode:'cors',body:JSON.stringify(payload)})
