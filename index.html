@@ -153,6 +153,39 @@
                 <div class="role-description">Sales Operations</div>
             </a>
         </nav>
+
+        <div id="lastUpdate" style="text-align:center;margin-top:40px;padding:15px;background:linear-gradient(135deg,#f0f0f0,#e8e8e8);border-radius:12px;color:#666;font-size:0.9em;display:none">
+            <span style="font-size:1.1em">📅</span> <span id="updateLabel">Checking data status...</span>
+        </div>
     </main>
+
+    <script>
+    (async()=>{
+        try{
+            const r=await fetch('https://salesap-g4ceg7arc2bkbvfx.centralus-01.azurewebsites.net/api/api?action=lastUpdate');
+            if(r.ok){
+                const data=await r.json();
+                const el=document.getElementById('lastUpdate');
+                const lbl=document.getElementById('updateLabel');
+                if(data.lastDate){
+                    lbl.textContent='Last data update: '+data.lastDate;
+                    el.style.display='block';
+                    // Check if today
+                    const today=new Date().toISOString().split('T')[0];
+                    const isToday=data.lastDate===today||data.lastDate===new Date().toLocaleDateString('en-GB');
+                    if(isToday){
+                        el.style.background='linear-gradient(135deg,#d4edda,#c3e6cb)';
+                        el.style.color='#155724';
+                        lbl.textContent='✅ Data is up to date — Last update: '+data.lastDate;
+                    } else {
+                        el.style.background='linear-gradient(135deg,#fff3cd,#ffeaa7)';
+                        el.style.color='#856404';
+                        lbl.textContent='⚠️ Data last updated: '+data.lastDate;
+                    }
+                }
+            }
+        }catch(e){}
+    })();
+    </script>
 </body>
 </html>
