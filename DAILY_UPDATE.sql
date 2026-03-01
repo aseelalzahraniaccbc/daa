@@ -112,6 +112,25 @@ PRINT '>> Step 4: BSMdata replaced';
 SELECT 'BSMdata' AS [Table], COUNT(*) AS [Total Rows] FROM BSMdata;
 
 
+-- ══ STEP 6: VERIFY DATA QUALITY ══
+SELECT 'Blank Customer Code' AS [Check], COUNT(*) AS [Count]
+FROM Sales WHERE [Customer Code] IS NULL OR LTRIM(RTRIM([Customer Code])) = ''
+UNION ALL
+SELECT 'No Customer Match', COUNT(*)
+FROM Sales s LEFT JOIN Customers c ON s.[Customer Code] = c.[Customer Code]
+WHERE c.[Customer Code] IS NULL
+UNION ALL
+SELECT 'Blank Product ID', COUNT(*)
+FROM Sales WHERE [PK_ProductID] IS NULL OR LTRIM(RTRIM([PK_ProductID])) = ''
+UNION ALL
+SELECT 'No Product Match', COUNT(*)
+FROM Sales s LEFT JOIN Products p ON s.[PK_ProductID] = p.[PK_ProductID]
+WHERE p.[PK_ProductID] IS NULL
+UNION ALL
+SELECT 'Blank Customer Name', COUNT(*)
+FROM Customers WHERE [Customer] IS NULL OR LTRIM(RTRIM([Customer])) = '';
+
+
 -- ══ STEP 5: UPDATE STATISTICS ══
 UPDATE STATISTICS Sales WITH FULLSCAN;
 UPDATE STATISTICS SalesmenData WITH FULLSCAN;
@@ -121,3 +140,11 @@ UPDATE STATISTICS BSMdata WITH FULLSCAN;
 PRINT '>> Step 5: Statistics updated';
 PRINT '>> ALL DONE — Now clear cache:';
 PRINT '>> https://salesap-g4ceg7arc2bkbvfx.centralus-01.azurewebsites.net/api/api?action=clearCache';
+
+
+
+
+
+
+
+
